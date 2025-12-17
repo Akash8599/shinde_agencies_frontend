@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
+import API_CONFIG from '../config/Api';
 import './Login.css';
 
 function Login({ onLoginSuccess }) {
@@ -11,7 +12,7 @@ function Login({ onLoginSuccess }) {
     password: '',
     confirmPassword: '',
     email: '',
-    role: 'CASHIER'
+    role: 'ADMIN'
   });
 
   const handleInputChange = (e) => {
@@ -25,7 +26,8 @@ function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      console.log('Login request to:', API_CONFIG.BACKEND_URL + API_CONFIG.ENDPOINTS.LOGIN);
+      const response = await axiosInstance.post(API_CONFIG.ENDPOINTS.LOGIN, {
         username: formData.username,
         password: formData.password
       });
@@ -36,15 +38,19 @@ function Login({ onLoginSuccess }) {
         localStorage.setItem('username', response.data.username);
         localStorage.setItem('userRole', response.data.role);
 
-        // Set axios default header for future requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        console.log('Login successful:', response.data);
 
         // Notify parent component
         onLoginSuccess(response.data);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Check credentials.');
-      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.message || 'Login failed. Check credentials.';
+      setError(errorMessage);
+      console.error('Login error:', {
+        status: err.response?.status,
+        message: errorMessage,
+        url: err.config?.url
+      });
     } finally {
       setLoading(false);
     }
@@ -62,7 +68,8 @@ function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/register', {
+      console.log('Register request to:', API_CONFIG.BACKEND_URL + API_CONFIG.ENDPOINTS.REGISTER);
+      const response = await axiosInstance.post(API_CONFIG.ENDPOINTS.REGISTER, {
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -76,14 +83,18 @@ function Login({ onLoginSuccess }) {
         localStorage.setItem('username', response.data.username);
         localStorage.setItem('userRole', response.data.role);
 
-        // Set axios default header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        console.log('Registration successful:', response.data);
 
         onLoginSuccess(response.data);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-      console.error('Register error:', err);
+      const errorMessage = err.response?.data?.message || 'Registration failed';
+      setError(errorMessage);
+      console.error('Register error:', {
+        status: err.response?.status,
+        message: errorMessage,
+        url: err.config?.url
+      });
     } finally {
       setLoading(false);
     }
@@ -127,19 +138,19 @@ function Login({ onLoginSuccess }) {
                 onClick={() => {
                   setIsLogin(false);
                   setError('');
-                  setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'CASHIER' });
+                  setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'ADMIN' });
                 }}
                 className="toggle-btn"
               >
                 Register here
               </button>
             </p>
-
+{/* 
             <div className="demo-credentials">
               <p>Demo Credentials:</p>
               <p>Username: <strong>admin</strong></p>
               <p>Password: <strong>admin123</strong></p>
-            </div>
+            </div> */}
           </form>
         ) : (
           <form onSubmit={handleRegister}>
@@ -181,8 +192,8 @@ function Login({ onLoginSuccess }) {
               value={formData.role}
               onChange={handleInputChange}
             >
-              <option value="CASHIER">Cashier</option>
-              <option value="MANAGER">Manager</option>
+              {/* <option value="CASHIER">Cashier</option>
+              <option value="MANAGER">Manager</option> */}
               <option value="ADMIN">Admin</option>
             </select>
 
@@ -197,7 +208,7 @@ function Login({ onLoginSuccess }) {
                 onClick={() => {
                   setIsLogin(true);
                   setError('');
-                  setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'CASHIER' });
+                  setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'ADMIN' });
                 }}
                 className="toggle-btn"
               >

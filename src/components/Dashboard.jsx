@@ -1,222 +1,546 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductManagement from '../pages/ProductManagement';
+import Shop from '../pages/Shop';
+import SalesOrder from '../pages/SalesOrder';
+import CustomerManagement from '../pages/CustomerManagement';
+import PurchaseOrderManagement from '../pages/PurchaseOrderManagement';
+import CompanySettings from '../pages/CompanySettings';
+import API_CONFIG from '../config/Api';
+import './Dashboard.css';
 
-function Dashboard({ user, onLogout }) {
-  const [currentPage, setCurrentPage] = useState('home');
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER: Safe JSON Parse
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const safeJsonParse = (text) => {
+  try {
+    if (!text) return null;
+    if (typeof text !== 'string') return text;
+    
+    if (text.trim().startsWith('<')) {
+      return null;
+    }
+    
+    return JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+};
+
+const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
+  const [currentView, setCurrentView] = useState('home');
+  const [userRole, setUserRole] = useState('');
+  const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setUserName(user.username);
+      setUserRole(user.role);
+    } else {
+      const savedUser = localStorage.getItem('username');
+      const savedRole = localStorage.getItem('userRole');
+      if (savedUser) setUserName(savedUser);
+      if (savedRole) setUserRole(savedRole);
+    }
+    setLoading(false);
+  }, [user]);
 
   const renderContent = () => {
-    switch (currentPage) {
+    switch (currentView) {
+      case 'home':
+        return <HomeView setCurrentView={setCurrentView} />;
       case 'products':
         return <ProductManagement />;
-      case 'home':
+      case 'shop':
+        return <Shop />;
+      case 'orders':
+        return <SalesOrder />;
+      case 'customers':
+        return <CustomerManagement />;
+      case 'purchase':
+        return <PurchaseOrderManagement />;
+      case 'settings':
+        return <SettingsView onNavigateToSettings={onNavigateToSettings} />;
       default:
-        return (
-          <div className="dashboard-content">
-            <h2>Welcome, {user.username}!</h2>
-            <p>You are logged in as: <strong>{user.role}</strong></p>
-            
-            <div className="features">
-              <h3>Available Features:</h3>
-              <ul>
-                {(user.role === 'ADMIN' || user.role === 'MANAGER') && (
-                  <>
-                    <li>✓ Manage Products</li>
-                    <li>✓ Manage Customers</li>
-                    <li>✓ Create Purchase Orders</li>
-                  </>
-                )}
-                <li>✓ Create Sales Invoices</li>
-                <li>✓ View Invoice History</li>
-                <li>✓ Download PDF Bills</li>
-              </ul>
-            </div>
-          </div>
-        );
+        return <HomeView setCurrentView={setCurrentView} />;
     }
   };
 
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>💼 Billing System</h1>
-        <div className="user-info">
-          <span>{user.username} ({user.role})</span>
-          <button onClick={onLogout} className="logout-btn">Logout</button>
+    <div className="dashboard-container">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>🛍️ Shop Manager</h2>
+          <p className="user-info">👤 {userName}</p>
+          <p className="role-badge">Role: {userRole}</p>
         </div>
-      </header>
 
-      <div className="dashboard-wrapper">
-        {(user.role === 'ADMIN' || user.role === 'MANAGER') && (
-          <nav className="sidebar">
-            <h3>Menu</h3>
-            <button 
-              className={`nav-item ${currentPage === 'home' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('home')}
-            >
-              🏠 Dashboard
-            </button>
-            <button 
-              className={`nav-item ${currentPage === 'products' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('products')}
-            >
-              📦 Products
-            </button>
-            <button className="nav-item enabled">👥 Customers</button>
-            <button className="nav-item enabled">📋 Purchase Orders</button>
-          </nav>
-        )}
+        <nav className="sidebar-nav">
+          <ul>
+            <li>
+              <button
+                onClick={() => setCurrentView('home')}
+                className={currentView === 'home' ? 'active' : ''}
+              >
+                📊 Dashboard
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setCurrentView('products')}
+                className={currentView === 'products' ? 'active' : ''}
+              >
+                📦 Products
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setCurrentView('shop')}
+                className={currentView === 'shop' ? 'active' : ''}
+              >
+                🛒 Shop & Cart
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setCurrentView('orders')}
+                className={currentView === 'orders' ? 'active' : ''}
+              >
+                📋 Sales Orders
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setCurrentView('customers')}
+                className={currentView === 'customers' ? 'active' : ''}
+              >
+                👥 Customers
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setCurrentView('purchase')}
+                className={currentView === 'purchase' ? 'active' : ''}
+              >
+                🛒 Purchase Orders
+              </button>
+            </li>
 
-        <main className="main-content">
+            <li className="settings-section">
+              <button
+                onClick={() => setCurrentView('settings')}
+                className={currentView === 'settings' ? 'active' : ''}
+              >
+                ⚙️ Settings
+              </button>
+            </li>
+          </ul>
+        </nav>
+
+        <div className="sidebar-footer">
+          <button onClick={onLogout} className="logout-btn">
+            🚪 Logout
+          </button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="top-bar">
+          <h1>🏪 Shop Owner Dashboard</h1>
+          <div className="header-actions">
+            <span className="timestamp">
+              {new Date().toLocaleDateString('en-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </span>
+          </div>
+        </header>
+
+        <div className="content-area">
           {renderContent()}
-        </main>
-      </div>
-
-      <style>{`
-        .dashboard {
-          min-height: 100vh;
-          background: #f5f5f5;
-          display: flex;
-          flex-direction: column;
-        }
-        .dashboard-header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .dashboard-header h1 {
-          font-size: 24px;
-          margin: 0;
-        }
-        .user-info {
-          display: flex;
-          gap: 20px;
-          align-items: center;
-        }
-        .logout-btn {
-          padding: 8px 16px;
-          background: rgba(255,255,255,0.2);
-          color: white;
-          border: 1px solid white;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 500;
-          transition: all 0.3s ease;
-        }
-        .logout-btn:hover {
-          background: rgba(255,255,255,0.3);
-        }
-        
-        .dashboard-wrapper {
-          display: flex;
-          flex: 1;
-        }
-
-        .sidebar {
-          width: 200px;
-          background: white;
-          padding: 20px;
-          box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-          border-right: 1px solid #e0e0e0;
-        }
-
-        .sidebar h3 {
-          margin: 0 0 15px 0;
-          color: #333;
-          font-size: 14px;
-          text-transform: uppercase;
-          font-weight: 600;
-        }
-
-        .nav-item {
-          display: block;
-          width: 100%;
-          padding: 10px 12px;
-          margin-bottom: 8px;
-          border: none;
-          background: transparent;
-          color: #666;
-          border-radius: 4px;
-          cursor: pointer;
-          text-align: left;
-          font-size: 14px;
-          transition: all 0.3s ease;
-        }
-
-        .nav-item:hover:not(.disabled) {
-          background: #f0f0f0;
-          color: #333;
-        }
-
-        .nav-item.active {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          font-weight: 600;
-        }
-
-        .nav-item.disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .main-content {
-          flex: 1;
-          overflow-y: auto;
-        }
-
-        .dashboard-content {
-          max-width: 1200px;
-          margin: 40px auto;
-          padding: 30px;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          width: 90%;
-        }
-
-        .features {
-          margin-top: 30px;
-          padding: 20px;
-          background: #f9f9f9;
-          border-radius: 6px;
-        }
-
-        .features ul {
-          list-style: none;
-          margin-top: 10px;
-          padding: 0;
-        }
-
-        .features li {
-          padding: 8px 0;
-          color: #333;
-        }
-
-        @media (max-width: 768px) {
-          .dashboard-wrapper {
-            flex-direction: column;
-          }
-          .sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 10px;
-          }
-          .sidebar h3 {
-            display: none;
-          }
-          .nav-item {
-            display: inline-block;
-            margin-right: 8px;
-            margin-bottom: 8px;
-          }
-        }
-      `}</style>
+        </div>
+      </main>
     </div>
   );
-}
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HOME VIEW - DASHBOARD WITH STATS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const HomeView = ({ setCurrentView }) => {
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalCustomers: 0,
+    pendingOrders: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [companyName, setCompanyName] = useState('Your Shop');
+
+  useEffect(() => {
+    fetchDashboardStats();
+    fetchCompanyName();
+  }, []);
+
+  // ✅ Fetch company name from API
+  const fetchCompanyName = async () => {
+    try {
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        return;
+      }
+
+      const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/company-settings`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (response.status === 304) {
+        return;
+      }
+
+      if (response.ok) {
+        const text = await response.text();
+        const data = safeJsonParse(text);
+        if (data?.companyName) {
+          setCompanyName(data.companyName);
+        }
+      }
+    } catch (error) {
+      // Silent error handling
+    }
+  };
+
+  // ✅ Main fetch function for dashboard statistics
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        const errorMsg = 'No authentication token found. Please login again.';
+        setError(errorMsg);
+        setLoading(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+
+      let totalProducts = 0;
+      let totalOrders = 0;
+      let totalRevenue = 0;
+      let totalCustomers = 0;
+      let unpaidOrders = 0;
+
+      // ✅ FETCH PRODUCTS using config endpoints
+      try {
+        const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.PRODUCTS}`;
+        const productsRes = await fetch(url, { 
+          method: 'GET',
+          headers 
+        });
+
+        if (productsRes.status === 304) {
+          totalProducts = 0;
+        } else if (productsRes.ok) {
+          const text = await productsRes.text();
+          
+          if (text.trim().startsWith('<')) {
+            totalProducts = 0;
+          } else {
+            const products = safeJsonParse(text);
+            totalProducts = Array.isArray(products) ? products.length : 0;
+          }
+        } else {
+          totalProducts = 0;
+        }
+      } catch (err) {
+        totalProducts = 0;
+      }
+
+      // ✅ FETCH SALES ORDERS SUMMARY using config endpoints
+      try {
+        const url = `${API_CONFIG.BACKEND_URL}/api/sales-orders/summary/all`;
+        const ordersRes = await fetch(url, { 
+          method: 'GET',
+          headers 
+        });
+
+        if (ordersRes.status === 304) {
+          totalOrders = 0;
+          totalRevenue = 0;
+          unpaidOrders = 0;
+        } else if (ordersRes.ok) {
+          const text = await ordersRes.text();
+          
+          if (text.trim().startsWith('<')) {
+            totalOrders = 0;
+            totalRevenue = 0;
+            unpaidOrders = 0;
+          } else {
+            const ordersSummary = safeJsonParse(text);
+            totalOrders = ordersSummary?.totalOrders || 0;
+            totalRevenue = ordersSummary?.totalRevenue || 0;
+            unpaidOrders = ordersSummary?.unpaidOrders || 0;
+          }
+        } else {
+          totalOrders = 0;
+          totalRevenue = 0;
+          unpaidOrders = 0;
+        }
+      } catch (err) {
+        totalOrders = 0;
+        totalRevenue = 0;
+        unpaidOrders = 0;
+      }
+
+      // ✅ FETCH CUSTOMERS using config endpoints
+      try {
+        const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.CUSTOMERS}`;
+        const customersRes = await fetch(url, { 
+          method: 'GET',
+          headers 
+        });
+
+        if (customersRes.status === 304) {
+          totalCustomers = 0;
+        } else if (customersRes.ok) {
+          const text = await customersRes.text();
+          
+          if (text.trim().startsWith('<')) {
+            totalCustomers = 0;
+          } else {
+            const customers = safeJsonParse(text);
+            totalCustomers = Array.isArray(customers) ? customers.length : 0;
+          }
+        } else {
+          totalCustomers = 0;
+        }
+      } catch (err) {
+        totalCustomers = 0;
+      }
+
+      // ✅ Update state
+      setStats({
+        totalProducts,
+        totalOrders,
+        totalRevenue,
+        totalCustomers,
+        pendingOrders: unpaidOrders
+      });
+
+      setLoading(false);
+    } catch (error) {
+      const errorMsg = `Critical error: ${error.message}`;
+      setError(errorMsg);
+      setLoading(false);
+    }
+  };
+
+  // Format currency using config
+  const formatCurrency = (value) => {
+    if (!value || isNaN(value)) return `${API_CONFIG.DEFAULTS.CURRENCY_SYMBOL}0`;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: API_CONFIG.DEFAULTS.CURRENCY,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
+  return (
+    <div className="home-view">
+      <section className="hero-section">
+        <div className="shop-name">
+          <h1>
+            <span className="emoji">🏪</span>
+            {companyName}
+          </h1>
+        </div>
+        <p className="shop-subtitle">Welcome to your dashboard! Manage your business with ease.</p>
+      </section>
+
+      <div className="stats-content">
+        <div className="stats-intro">
+          <h2>Business Overview</h2>
+          <p>Real-time statistics from your store</p>
+        </div>
+
+        {error && (
+          <div style={{
+            padding: '16px',
+            marginBottom: '24px',
+            background: '#fee',
+            border: '1px solid #fcc',
+            borderRadius: '8px',
+            color: '#c33'
+          }}>
+            <strong>Error:</strong> {error}
+            <button 
+              onClick={() => fetchDashboardStats()}
+              style={{
+                marginLeft: '12px',
+                padding: '6px 12px',
+                background: '#c33',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading">Loading statistics...</div>
+        ) : (
+          <>
+            <div className="stats-grid">
+              <div className="stat-card primary">
+                <h3>📦 Total Products</h3>
+                <p className="stat-value">{stats.totalProducts}</p>
+                <p className="stat-label">In catalog</p>
+              </div>
+
+              <div className="stat-card success">
+                <h3>📋 Total Orders</h3>
+                <p className="stat-value">{stats.totalOrders}</p>
+                <p className="stat-label">Placed</p>
+              </div>
+
+              <div className="stat-card info">
+                <h3>💰 Total Revenue</h3>
+                <p className="stat-value">
+                  {formatCurrency(stats.totalRevenue).replace(API_CONFIG.DEFAULTS.CURRENCY_SYMBOL, '')}
+                </p>
+                <p className="stat-label">Earned</p>
+              </div>
+
+              <div className="stat-card warning">
+                <h3>👥 Customers</h3>
+                <p className="stat-value">{stats.totalCustomers}</p>
+                <p className="stat-label">Active</p>
+              </div>
+
+              <div className="stat-card danger">
+                <h3>⏳ Pending Orders</h3>
+                <p className="stat-value">{stats.pendingOrders}</p>
+                <p className="stat-label">Awaiting Payment</p>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+              <h3>Quick Actions</h3>
+              <div className="actions-grid">
+                <button 
+                  onClick={() => setCurrentView('products')}
+                  className="action-btn"
+                >
+                  ➕ Add Product
+                </button>
+                <button 
+                  onClick={() => setCurrentView('orders')}
+                  className="action-btn"
+                >
+                  📋 View Orders
+                </button>
+                <button 
+                  onClick={() => setCurrentView('customers')}
+                  className="action-btn"
+                >
+                  👥 Customers
+                </button>
+                <button 
+                  onClick={() => setCurrentView('purchase')}
+                  className="action-btn"
+                >
+                  🛒 Purchase
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTINGS VIEW
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SettingsView = ({ onNavigateToSettings }) => {
+  return (
+    <div className="settings-view">
+      <h2>⚙️ Settings & Configuration</h2>
+      
+      <div className="settings-grid">
+        <div className="settings-card">
+          <div className="card-icon">🏢</div>
+          <h3>Company Settings</h3>
+          <p>Manage company details, bank information, logo, and signature for invoices</p>
+          <button 
+            onClick={onNavigateToSettings}
+            className="btn btn-primary full-width"
+          >
+            ⚙️ Go to Company Settings
+          </button>
+        </div>
+
+        <div className="settings-card coming-soon">
+          <div className="card-icon">👥</div>
+          <h3>User Management</h3>
+          <p>Manage user accounts and permissions</p>
+          <button className="btn btn-secondary full-width" disabled>
+            🔒 Coming Soon
+          </button>
+        </div>
+
+        <div className="settings-card coming-soon">
+          <div className="card-icon">🎨</div>
+          <h3>Theme & Appearance</h3>
+          <p>Customize the dashboard theme and colors</p>
+          <button className="btn btn-secondary full-width" disabled>
+            🔒 Coming Soon
+          </button>
+        </div>
+
+        <div className="settings-card coming-soon">
+          <div className="card-icon">📧</div>
+          <h3>Email Configuration</h3>
+          <p>Setup email notifications and invoice delivery</p>
+          <button className="btn btn-secondary full-width" disabled>
+            🔒 Coming Soon
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Dashboard;
