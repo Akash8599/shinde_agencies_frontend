@@ -45,6 +45,10 @@
 }
 
 .cm-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
   font-size: 32px;
   font-weight: 700;
   color: var(--text-dark);
@@ -52,9 +56,19 @@
   letter-spacing: -0.5px;
 }
 
+.cm-icon {
+  font-size: 36px; /* slightly bigger than text */
+  line-height: 1;
+}
+
+.cm-text {
+  line-height: 1.1;
+}
+
+
 .cm-subtitle {
   font-size: 14px;
-  color: var(--text-light);
+  color: var(--text-dark);
   margin: 0;
 }
 
@@ -197,7 +211,7 @@
   display: block;
   margin-top: 6px;
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--text-dark);
   font-weight: 400;
 }
 
@@ -588,8 +602,9 @@
 }
 
 .customers-table .city,
+.customers-table .state-code,
 .customers-table .state {
-  color: var(--text-light);
+  color: var(--text-dark);
 }
 
 .customers-table .actions {

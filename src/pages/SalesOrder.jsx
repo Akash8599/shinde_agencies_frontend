@@ -87,15 +87,17 @@ const SalesOrder = () => {
     setSelectedOrder(null);
   };
 
-  // Format date - Compact version
+  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch {
       return dateString;
     }
@@ -202,9 +204,8 @@ const SalesOrder = () => {
         <div className="orders-grid-futuristic">
           {filteredOrders.map((order) => {
             const totals = calculateOrderTotal(order.items);
-            const items = order.items || [];
-            const itemCount = items.length;
-
+            const itemCount = (order.items || []).length;
+            
             return (
               <div key={order.id} className="order-card-futuristic">
                 {/* Card Header */}
@@ -218,7 +219,7 @@ const SalesOrder = () => {
                   </div>
                 </div>
 
-                {/* Customer Info - More Compact */}
+                {/* Customer Info */}
                 <div className="order-customer-info">
                   <div className="info-row">
                     <span className="info-label">👤 Customer</span>
@@ -228,49 +229,53 @@ const SalesOrder = () => {
                     <span className="info-label">📱 Phone</span>
                     <span className="info-value">{order.customerPhone || 'N/A'}</span>
                   </div>
-                </div>
-
-                {/* ✅ IMPROVED: Order Details with Smart Item Display & Black Date Text */}
-                <div className="order-details">
-                  {/* ✅ Items Section - Shows first 2 items + count */}
-                  <div className="detail-item detail-items">
-                    <span className="detail-label">Items ({itemCount})</span>
-                    <div className="detail-items-list">
-                      {items.slice(0, 2).map((item, idx) => (
-                        <span key={idx} className="item-pill" title={item.productName || `Product ${item.productId}`}>
-                          {item.productName || `Product ${item.productId}`}
-                          <span className="item-qty">×{item.quantity}</span>
-                        </span>
-                      ))}
-                      {itemCount > 2 && (
-                        <span className="item-pill item-more">
-                          +{itemCount - 2} more
-                        </span>
-                      )}
+                  {order.customerEmail && (
+                    <div className="info-row">
+                      <span className="info-label">📧 Email</span>
+                      <span className="info-value">{order.customerEmail}</span>
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* ✅ Date Section - Black text for visibility */}
-                  <div className="detail-item detail-date">
+                {/* Order Details - Improved */}
+                <div className="order-details">
+                  <div className="detail-item detail-items-expandable">
+                    <span className="detail-label">Items</span>
+                    <span className="detail-value">{itemCount}</span>
+                    {itemCount > 0 && (
+                      <div className="items-preview">
+                        {(order.items || []).slice(0, 3).map((item, idx) => (
+                          <div key={idx} className="item-preview-row">
+                            <span className="item-preview-name">{item.productName || `Product ${item.productId}`}</span>
+                            <span className="item-preview-qty">×{item.quantity}</span>
+                          </div>
+                        ))}
+                        {itemCount > 3 && (
+                          <div className="item-preview-more">+{itemCount - 3} more...</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="detail-item">
                     <span className="detail-label">Date</span>
-                    <span className="detail-value detail-date-value">{formatDate(order.createdAt)}</span>
+                    <span className="detail-value detail-date">{formatDate(order.createdAt)}</span>
                   </div>
                 </div>
 
-                {/* Amount Section - More Compact */}
+                {/* Amount Section */}
                 <div className="order-amount">
                   <div className="amount-breakdown">
                     <div className="amount-row">
                       <span>Subtotal</span>
-                      <span>₹{totals.subtotal.toFixed(0)}</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="amount-row">
                       <span>Tax</span>
-                      <span>₹{totals.tax.toFixed(0)}</span>
+                      <span>₹{totals.tax.toFixed(2)}</span>
                     </div>
                     <div className="amount-row total">
                       <span>Total</span>
-                      <span>₹{totals.total.toFixed(0)}</span>
+                      <span>₹{totals.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -334,7 +339,7 @@ const SalesOrder = () => {
                 </div>
               </div>
 
-              {/* ✅ IMPROVED: Items Section - Shows Product Name instead of Product ID */}
+              {/* Items Section - Now showing Product Name */}
               <div className="modal-section">
                 <h3>Order Items</h3>
                 <div className="items-list">
@@ -342,10 +347,7 @@ const SalesOrder = () => {
                     <div key={idx} className="item-row">
                       <div className="item-details">
                         <p className="item-name">{item.productName || `Product ${item.productId}`}</p>
-                        <p className="item-desc">
-                          Qty: {item.quantity} × ₹{(item.sellingPrice || 0).toFixed(0)}
-                          {item.gstRate && ` (GST: ${item.gstRate}%)`}
-                        </p>
+                        <p className="item-desc">Qty: {item.quantity} × ₹{(item.sellingPrice || 0).toFixed(0)}</p>
                       </div>
                       <div className="item-total">
                         ₹{((item.quantity || 0) * (item.sellingPrice || 0)).toFixed(0)}

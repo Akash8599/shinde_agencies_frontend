@@ -56,7 +56,7 @@ const CustomerManagement = () => {
       setError('');
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Failed to load customers';
-      
+
       if (err.response?.status === 403) {
         setError('🔒 ACCESS DENIED (403): You do not have permission to view customers.');
       } else if (err.response?.status === 401) {
@@ -130,7 +130,7 @@ const CustomerManagement = () => {
         return;
       }
 
-      const endpoint = editingId 
+      const endpoint = editingId
         ? API_CONFIG.ENDPOINTS.UPDATE_CUSTOMER(editingId)
         : API_CONFIG.ENDPOINTS.CREATE_CUSTOMER;
 
@@ -228,7 +228,11 @@ const CustomerManagement = () => {
       {/* ✅ ENHANCED HEADER */}
       <div className="cm-header">
         <div className="header-content">
-          <h1 className="cm-title">👥 Customer Management</h1>
+          <h1 className="cm-title">
+            <span className="cm-icon">👥</span>
+            <span className="cm-text">Customer Management</span>
+          </h1>
+
           <p className="cm-subtitle">Manage and organize your customer information</p>
         </div>
         <button
@@ -290,18 +294,19 @@ const CustomerManagement = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="9876543210"
+                    placeholder="e.g., 9876543210"
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>City</label>
+                  <label>City *</label>
                   <input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
                     placeholder="City name"
+                    required
                   />
                 </div>
               </div>
@@ -315,19 +320,20 @@ const CustomerManagement = () => {
                     name="gstin"
                     value={formData.gstin}
                     onChange={handleInputChange}
-                    placeholder="27ABCDE1234F1Z5"
+                    placeholder="e.g., 27ABCDE1234F1Z5"
                     maxLength="15"
                   />
                   <small className="field-hint">GST Registration or Unique ID Number</small>
                 </div>
                 <div className="form-group">
-                  <label>State</label>
+                  <label>State *</label>
                   <input
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
-                    placeholder="State name"
+                    placeholder="e.g., Maharashtra"
+                    required
                   />
                 </div>
               </div>
@@ -343,27 +349,42 @@ const CustomerManagement = () => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    placeholder="413102"
-                  />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>StateCode *</label>
+                    <input
+                      type="text"
+                      name="statecode"
+                      value={formData.statecode}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 27"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-actions">
-                <button type="submit" className="btn-submit">
-                  {editingId ? '💾 Update Customer' : '✅ Add Customer'}
-                </button>
-                <button type="button" className="btn-cancel" onClick={resetForm}>
-                  ❌ Cancel
-                </button>
-              </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Pincode *</label>
+                    <input
+                      type="text"
+                      name="pincode"
+                      value={formData.pincode}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 413102"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="btn-submit">
+                    {editingId ? '💾 Update Customer' : '✅ Add Customer'}
+                  </button>
+                  <button type="button" className="btn-cancel" onClick={resetForm}>
+                    ❌ Cancel
+                  </button>
+                </div>
             </form>
           </div>
         </div>
@@ -381,7 +402,7 @@ const CustomerManagement = () => {
             <p className="delete-warning-text">
               ⚠️ This action cannot be undone. All customer data will be permanently deleted.
             </p>
-            
+
             <div className="delete-customer-details">
               <div className="detail-item">
                 <span className="detail-label">📧 Email:</span>

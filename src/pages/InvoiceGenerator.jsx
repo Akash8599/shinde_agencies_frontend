@@ -211,13 +211,14 @@ const InvoiceGenerator = ({ orderId, onClose }) => {
               <div className="buyer-details">
                 <p className="entity-name"><strong>{invoiceData.customerName}</strong></p>
                 <p>{invoiceData.customerAddress}</p>
+                {invoiceData.customerCity && <p>{invoiceData.customerCity}, {invoiceData.customerState} - {invoiceData.customerPostalCode}</p>}
                 
                 {/* ✅ ADDED: Buyer GSTIN/UIN and State Code */}
                 <div className="gst-info-row">
-                  {invoiceData.customerGstin && (
+                  {invoiceData.customerGstIn && (
                     <div className="gst-item">
                       <span className="gst-label">GSTIN/UIN:</span>
-                      <span className="gst-value">{invoiceData.customerGstin}</span>
+                      <span className="gst-value">{invoiceData.customerGstIn}</span>
                     </div>
                   )}
                   {invoiceData.customerStateCode && (

@@ -32,6 +32,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
   const [userRole, setUserRole] = useState('');
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,10 +47,16 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
     setLoading(false);
   }, [user]);
 
+  // Close mobile menu when view changes
+  const handleNavClick = (view) => {
+    setCurrentView(view);
+    setMobileMenuOpen(false);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'home':
-        return <HomeView setCurrentView={setCurrentView} />;
+        return <HomeView setCurrentView={handleNavClick} />;
       case 'products':
         return <ProductManagement />;
       case 'shop':
@@ -63,7 +70,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
       case 'settings':
         return <SettingsView onNavigateToSettings={onNavigateToSettings} />;
       default:
-        return <HomeView setCurrentView={setCurrentView} />;
+        return <HomeView setCurrentView={handleNavClick} />;
     }
   };
 
@@ -73,7 +80,15 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 
   return (
     <div className="dashboard-container">
-      <aside className="sidebar">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-menu-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <h2>🛍️ Shop Manager</h2>
           <p className="user-info">👤 {userName}</p>
@@ -84,7 +99,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
           <ul>
             <li>
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => handleNavClick('home')}
                 className={currentView === 'home' ? 'active' : ''}
               >
                 📊 Dashboard
@@ -92,7 +107,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
             </li>
             <li>
               <button
-                onClick={() => setCurrentView('products')}
+                onClick={() => handleNavClick('products')}
                 className={currentView === 'products' ? 'active' : ''}
               >
                 📦 Products
@@ -100,7 +115,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
             </li>
             <li>
               <button
-                onClick={() => setCurrentView('shop')}
+                onClick={() => handleNavClick('shop')}
                 className={currentView === 'shop' ? 'active' : ''}
               >
                 🛒 Shop & Cart
@@ -108,7 +123,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
             </li>
             <li>
               <button
-                onClick={() => setCurrentView('orders')}
+                onClick={() => handleNavClick('orders')}
                 className={currentView === 'orders' ? 'active' : ''}
               >
                 📋 Sales Orders
@@ -116,7 +131,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
             </li>
             <li>
               <button
-                onClick={() => setCurrentView('customers')}
+                onClick={() => handleNavClick('customers')}
                 className={currentView === 'customers' ? 'active' : ''}
               >
                 👥 Customers
@@ -124,7 +139,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
             </li>
             <li>
               <button
-                onClick={() => setCurrentView('purchase')}
+                onClick={() => handleNavClick('purchase')}
                 className={currentView === 'purchase' ? 'active' : ''}
               >
                 🛒 Purchase Orders
@@ -133,7 +148,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 
             <li className="settings-section">
               <button
-                onClick={() => setCurrentView('settings')}
+                onClick={() => handleNavClick('settings')}
                 className={currentView === 'settings' ? 'active' : ''}
               >
                 ⚙️ Settings
@@ -151,7 +166,15 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 
       <main className="main-content">
         <header className="top-bar">
-          <h1>🏪 Shop Owner Dashboard</h1>
+          <div className="top-bar-left">
+            <button 
+              className="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              ☰
+            </button>
+            <h1>🏪 Shop Owner Dashboard</h1>
+          </div>
           <div className="header-actions">
             <span className="timestamp">
               {new Date().toLocaleDateString('en-IN', {

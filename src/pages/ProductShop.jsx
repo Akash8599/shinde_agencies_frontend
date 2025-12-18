@@ -165,10 +165,10 @@ const ProductShop = () => {
       setCart([...cart, {
         productId: product.id,
         productName: product.name,
-        sellingPrice: product.sellingPrice,
+        sellingPrice: parseFloat(product.sellingPrice) || 0,
         gstRate: product.gstRate,
         quantity: 1,
-        costPrice: product.costPrice,
+        costPrice: parseFloat(product.costPrice) || 0,
         description: product.description
       }]);
     }
@@ -213,13 +213,13 @@ const ProductShop = () => {
     }
   };
 
-  // Calculate cart totals
+  // Calculate cart totals - with decimal support
   const calculateCartTotals = () => {
     let subtotal = 0;
     let totalTax = 0;
 
     cart.forEach(item => {
-      const itemSubtotal = item.quantity * item.sellingPrice;
+      const itemSubtotal = item.quantity * parseFloat(item.sellingPrice);
       const itemTax = (itemSubtotal * item.gstRate) / 100;
       subtotal += itemSubtotal;
       totalTax += itemTax;
@@ -267,7 +267,7 @@ const ProductShop = () => {
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          sellingPrice: item.sellingPrice
+          sellingPrice: parseFloat(item.sellingPrice)
         }))
       };
 
@@ -416,7 +416,7 @@ Your order has been placed and invoice is ready.
                   <div className="product-info">
                     <div className="price-info">
                       <span className="label">Price:</span>
-                      <span className="price">₹{product.sellingPrice}</span>
+                      <span className="price">₹{parseFloat(product.sellingPrice).toFixed(2)}</span>
                     </div>
                     <div className="gst-info">
                       <span className="label">GST:</span>
@@ -466,14 +466,15 @@ Your order has been placed and invoice is ready.
                 <div className="items-list">
                   {cart.map(item => {
                     const product = products.find(p => p.id === item.productId);
-                    const itemTotal = item.quantity * item.sellingPrice;
+                    const itemPrice = parseFloat(item.sellingPrice);
+                    const itemTotal = item.quantity * itemPrice;
                     const itemTax = (itemTotal * item.gstRate) / 100;
 
                     return (
                       <div key={item.productId} className="cart-item">
                         <div className="item-details">
                           <h4>{item.productName}</h4>
-                          <p className="item-price">₹{item.sellingPrice} × {item.quantity} = ₹{itemTotal.toFixed(2)}</p>
+                          <p className="item-price">₹{itemPrice.toFixed(2)} × {item.quantity} = ₹{itemTotal.toFixed(2)}</p>
                           <p className="item-gst">GST ({item.gstRate}%): ₹{itemTax.toFixed(2)}</p>
                         </div>
 
@@ -755,7 +756,7 @@ Your order has been placed and invoice is ready.
                       <span className="item-name">{item.productName}</span>
                       <span className="item-qty">× {item.quantity}</span>
                     </div>
-                    <span className="item-amount">₹{(item.quantity * item.sellingPrice * (1 + item.gstRate / 100)).toFixed(2)}</span>
+                    <span className="item-amount">₹{(item.quantity * parseFloat(item.sellingPrice) * (1 + item.gstRate / 100)).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
