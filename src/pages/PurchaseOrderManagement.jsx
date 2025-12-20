@@ -49,7 +49,8 @@ function PurchaseOrderManagement() {
     try {
       setLoading(true);
       const response = await axiosInstance.get(API_CONFIG.ENDPOINTS.PURCHASE_ORDERS);
-      setPurchaseOrders(response.data);
+      const sortedPOs = response.data.sort((a, b) => b.id - a.id);
+      setPurchaseOrders(sortedPOs);
       setError('');
     } catch (err) {
       console.error('Error fetching POs:', err);
@@ -195,7 +196,7 @@ function PurchaseOrderManagement() {
 
   const handleUpdateItem = (index, field, value) => {
     const updatedItems = [...newPO.items];
-    
+
     if (field === 'productId') {
       const product = products.find(p => p.id === parseInt(value));
       updatedItems[index].productId = parseInt(value);
@@ -203,7 +204,7 @@ function PurchaseOrderManagement() {
     } else {
       updatedItems[index][field] = field === 'quantity' ? parseInt(value) || 0 : parseFloat(value) || 0;
     }
-    
+
     setNewPO({ ...newPO, items: updatedItems });
   };
 
@@ -259,16 +260,29 @@ function PurchaseOrderManagement() {
     if (!productSearchTerm.trim()) {
       return products;
     }
-    
+
     const term = productSearchTerm.toLowerCase();
-    return products.filter(product => 
+    return products.filter(product =>
       product.name.toLowerCase().includes(term) ||
       product.sku.toLowerCase().includes(term)
     );
   };
 
-  const getProductName = (productId) => {
-    const product = products.find(p => p.id === productId);
+  const getProductName = (itemOrId) => {
+    // Handle if the whole item object is passed
+    if (typeof itemOrId === 'object' && itemOrId !== null) {
+      if (itemOrId.productName) return itemOrId.productName;
+      if (itemOrId.product && itemOrId.product.name) return itemOrId.product.name;
+
+      const id = itemOrId.productId || (itemOrId.product ? itemOrId.product.id : null);
+      if (!id) return 'Unknown';
+
+      const product = products.find(p => p.id == id); // Loose equality
+      return product ? product.name : 'Unknown';
+    }
+
+    // Handle if just ID is passed
+    const product = products.find(p => p.id == itemOrId); // Loose equality
     return product ? product.name : 'Unknown';
   };
 
@@ -294,7 +308,7 @@ function PurchaseOrderManagement() {
                 <h1>📦 Purchase Orders</h1>
                 <p className="po-subtitle">Manage supplier purchases and inventory</p>
               </div>
-              <button 
+              <button
                 className="btn-create-po"
                 onClick={() => setCurrentView('create')}
               >
@@ -339,7 +353,7 @@ function PurchaseOrderManagement() {
                 <h3>{purchaseOrders.length === 0 ? 'No purchase orders yet' : 'No Results Found'}</h3>
                 <p>{purchaseOrders.length === 0 ? 'Create your first purchase order to get started' : `No POs match "${searchTerm}"`}</p>
                 {purchaseOrders.length === 0 && (
-                  <button 
+                  <button
                     className="btn-create-po"
                     onClick={() => setCurrentView('create')}
                   >
@@ -356,7 +370,7 @@ function PurchaseOrderManagement() {
                         <h3 className="po-number">{po.poNumber}</h3>
                         <p className="po-supplier">{po.supplierName}</p>
                       </div>
-                      <span 
+                      <span
                         className="po-status"
                         style={{ backgroundColor: getStatusColor(po.status) }}
                       >
@@ -382,7 +396,7 @@ function PurchaseOrderManagement() {
                     </div>
 
                     <div className="po-card-footer">
-                      <button 
+                      <button
                         className="action-btn view-btn"
                         onClick={() => handleViewPO(po)}
                         title="View Details"
@@ -391,14 +405,14 @@ function PurchaseOrderManagement() {
                       </button>
                       {po.status === 'ORDERED' && (
                         <>
-                          <button 
+                          <button
                             className="action-btn receive-btn"
                             onClick={() => handleReceivePO(po.id)}
                             title="Mark as Received"
                           >
                             ✓ Receive
                           </button>
-                          <button 
+                          <button
                             className="action-btn cancel-btn"
                             onClick={() => handleCancelPO(po.id)}
                             title="Cancel"
@@ -417,7 +431,7 @@ function PurchaseOrderManagement() {
 
         {currentView === 'create' && (
           <div className="po-create-view">
-            <button 
+            <button
               className="btn-back"
               onClick={() => {
                 setCurrentView('list');
@@ -453,7 +467,7 @@ function PurchaseOrderManagement() {
               <div className="po-form-section">
                 <div className="section-header">
                   <h3 className="section-title">Order Items</h3>
-                  <button 
+                  <button
                     className="btn-add-item"
                     onClick={handleAddItem}
                   >
@@ -465,72 +479,85 @@ function PurchaseOrderManagement() {
                   {newPO.items.map((item, index) => (
                     <div key={index} className="po-item-card">
                       <div className="po-item-number">Item {index + 1}</div>
-                      
+
                       <div className="po-item-fields">
                         <div className="po-field-group">
                           <label className="po-form-label">Product *</label>
                           <div className="po-product-selector">
-                            {showProductSearch === index ? (
+                            {showProductSearch === index && (
+                              <div
+                                className="click-outside-overlay"
+                                onClick={() => {
+                                  setShowProductSearch(null);
+                                  setProductSearchTerm('');
+                                }}
+                              ></div>
+                            )}
+
+                            <button
+                              className="po-product-select-btn"
+                              onClick={() => setShowProductSearch(index)}
+                            >
+                              {item.productName || 'Select Product...'}
+                            </button>
+
+                            {showProductSearch === index && (
                               <div className="po-product-search-dropdown">
-                                <input
-                                  type="text"
-                                  className="po-product-search-input"
-                                  placeholder="Search product name or SKU..."
-                                  value={productSearchTerm}
-                                  onChange={(e) => setProductSearchTerm(e.target.value)}
-                                  autoFocus
-                                />
+                                <div className="po-product-search-header">
+                                  <input
+                                    type="text"
+                                    className="po-product-search-input"
+                                    placeholder="Search product name or SKU..."
+                                    value={productSearchTerm}
+                                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
                                 <div className="po-product-list">
                                   {getFilteredProducts().length > 0 ? (
                                     getFilteredProducts().map((product) => (
                                       <button
                                         key={product.id}
-                                        className="po-product-item"
+                                        className={`po-product-item ${item.productId === product.id ? 'selected' : ''}`}
                                         onClick={() => {
                                           handleUpdateItem(index, 'productId', product.id.toString());
                                           setShowProductSearch(null);
                                           setProductSearchTerm('');
                                         }}
                                       >
-                                        <div className="po-product-item-name">{product.name}</div>
-                                        <div className="po-product-item-sku">SKU: {product.sku}</div>
+                                        <div className="po-product-item-info">
+                                          <span className="po-product-item-name">{product.name}</span>
+                                          <span className="po-product-item-sku">SKU: {product.sku}</span>
+                                        </div>
+                                        <span className="po-product-item-price">₹{product.costPrice}</span>
                                       </button>
                                     ))
                                   ) : (
-                                    <div className="po-product-empty">No products found</div>
+                                    <div className="po-product-empty">No products found matching "{productSearchTerm}"</div>
                                   )}
                                 </div>
-                                <button
-                                  className="po-product-search-close"
-                                  onClick={() => {
-                                    setShowProductSearch(null);
-                                    setProductSearchTerm('');
-                                  }}
-                                >
-                                  ✕ Close
-                                </button>
                               </div>
-                            ) : (
-                              <>
-                                <button
-                                  className="po-product-select-btn"
-                                  onClick={() => setShowProductSearch(index)}
-                                >
-                                  {item.productName || 'Select Product...'}
-                                </button>
-                              </>
                             )}
-                            <button 
-                              className="btn-create-product"
+
+                            {/* Restored External 'New Product' Button */}
+                            <button
+                              className="btn-create-product-inline"
                               onClick={() => {
                                 setSelectedItemIndex(index);
                                 setShowNewProductModal(true);
                               }}
                               title="Create new product"
                             >
-                              + New
+                              New Product
                             </button>
                           </div>
+                          {/* Stock Display */}
+                          {item.productId && (
+                            <div className="po-item-stock-display">
+                              Running Stock: <span className="stock-value">{products.find(p => p.id == item.productId)?.quantity || 0}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="po-field-group">
@@ -546,7 +573,7 @@ function PurchaseOrderManagement() {
                         </div>
 
                         <div className="po-field-group">
-                          <label className="po-form-label">Cost Price (per unit) *</label>
+                          <label className="po-form-label">Cost Price *</label>
                           <input
                             type="number"
                             className="po-form-input"
@@ -566,7 +593,7 @@ function PurchaseOrderManagement() {
                         </div>
 
                         {newPO.items.length > 1 && (
-                          <button 
+                          <button
                             className="btn-remove-item"
                             onClick={() => handleRemoveItem(index)}
                             title="Remove item"
@@ -595,14 +622,14 @@ function PurchaseOrderManagement() {
               </div>
 
               <div className="po-form-actions">
-                <button 
+                <button
                   className="btn-po-create-final"
                   onClick={handleCreatePO}
                   disabled={loading}
                 >
                   {loading ? 'Creating...' : 'Create Purchase Order'}
                 </button>
-                <button 
+                <button
                   className="btn-po-cancel"
                   onClick={() => {
                     setCurrentView('list');
@@ -621,7 +648,7 @@ function PurchaseOrderManagement() {
 
         {currentView === 'view' && selectedPO && (
           <div className="po-view">
-            <button 
+            <button
               className="btn-back"
               onClick={() => setCurrentView('list')}
             >
@@ -638,7 +665,7 @@ function PurchaseOrderManagement() {
                     <span>{new Date(selectedPO.orderDate).toLocaleDateString()}</span>
                   </p>
                 </div>
-                <span 
+                <span
                   className="po-status-large"
                   style={{ backgroundColor: getStatusColor(selectedPO.status) }}
                 >
@@ -661,7 +688,7 @@ function PurchaseOrderManagement() {
                     <tbody>
                       {selectedPO.items && selectedPO.items.map((item, index) => (
                         <tr key={index}>
-                          <td className="product-cell">{getProductName(item.productId)}</td>
+                          <td className="product-cell">{getProductName(item)}</td>
                           <td className="number-cell">{item.quantity}</td>
                           <td className="number-cell">₹{item.costPrice.toFixed(2)}</td>
                           <td className="number-cell total-cell">₹{(item.quantity * item.costPrice).toFixed(2)}</td>
@@ -679,13 +706,13 @@ function PurchaseOrderManagement() {
 
               {selectedPO.status === 'ORDERED' && (
                 <div className="po-detail-actions">
-                  <button 
+                  <button
                     className="btn-po-receive"
                     onClick={() => handleReceivePO(selectedPO.id)}
                   >
                     ✓ Mark as Received
                   </button>
-                  <button 
+                  <button
                     className="btn-po-cancel-order"
                     onClick={() => handleCancelPO(selectedPO.id)}
                   >
@@ -702,7 +729,7 @@ function PurchaseOrderManagement() {
             <div className="po-product-modal">
               <div className="po-modal-header">
                 <h3>Create New Product</h3>
-                <button 
+                <button
                   className="po-modal-close"
                   onClick={() => {
                     setShowNewProductModal(false);
@@ -828,7 +855,7 @@ function PurchaseOrderManagement() {
               </div>
 
               <div className="po-modal-footer">
-                <button 
+                <button
                   className="btn-po-cancel-modal"
                   onClick={() => {
                     setShowNewProductModal(false);
@@ -847,7 +874,7 @@ function PurchaseOrderManagement() {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   className="btn-po-create-product-final"
                   onClick={handleCreateProduct}
                   disabled={creatingProduct}

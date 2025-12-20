@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Login from './pages/Login';
-import Dashboard from './components/Dashboard';
+import Dashboard, { HomeView, SettingsView } from './components/Dashboard';
 import CompanySettings from './pages/CompanySettings';
+import ProductManagement from './pages/ProductManagement';
+import Shop from './pages/Shop';
+import SalesOrder from './pages/SalesOrder';
+import CustomerManagement from './pages/CustomerManagement';
+import PurchaseOrderManagement from './pages/PurchaseOrderManagement';
 import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard' or 'settings'
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -34,7 +40,7 @@ function App() {
       role: loginData.role
     });
     setIsAuthenticated(true);
-    setCurrentPage('dashboard'); // Go to dashboard after login
+    navigate('/dashboard');
   };
 
   const handleLogout = () => {
@@ -49,45 +55,81 @@ function App() {
     // Reset state
     setIsAuthenticated(false);
     setUser(null);
-    setCurrentPage('dashboard');
-  };
-
-  const handleNavigateToSettings = () => {
-    setCurrentPage('settings');
+    navigate('/login');
   };
 
   const handleBackToDashboard = () => {
-    setCurrentPage('dashboard');
+    navigate('/dashboard');
   };
 
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
-  // If not authenticated, show login page
-  if (!isAuthenticated) {
-    return (
-      <div className="App">
-        <Login onLoginSuccess={handleLoginSuccess} />
-      </div>
-    );
-  }
-
-  // If authenticated, show dashboard or settings based on currentPage
   return (
     <div className="App">
-      {currentPage === 'dashboard' && (
-        <Dashboard
-          user={user}
-          onLogout={handleLogout}
-          onNavigateToSettings={handleNavigateToSettings}
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            !isAuthenticated ? (
+              <Login onLoginSuccess={handleLoginSuccess} />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
+          }
         />
-      )}
-      {currentPage === 'settings' && (
-        <CompanySettings
-          onBackToDashboard={handleBackToDashboard}
+        {/* ✅ Register Route */}
+        <Route
+          path="/register"
+          element={
+            !isAuthenticated ? (
+              <Login onLoginSuccess={handleLoginSuccess} />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
+          }
         />
-      )}
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Dashboard
+                user={user}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        >
+          {/* Default child route redirects to dashboard */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<HomeView />} />
+          <Route path="shop" element={<Shop />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="customers" element={<CustomerManagement />} />
+          <Route path="purchase-orders" element={<PurchaseOrderManagement />} />
+          <Route path="orders" element={<SalesOrder />} />
+          <Route path="settings" element={<SettingsView />} />
+        </Route>
+
+        <Route
+          path="/company-settings"
+          element={
+            isAuthenticated ? (
+              <CompanySettings onBackToDashboard={handleBackToDashboard} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* Catch all redirect */}
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
     </div>
   );
 }

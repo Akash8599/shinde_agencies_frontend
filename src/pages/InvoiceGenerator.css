@@ -261,7 +261,8 @@
 
 /* ✅ WHITE text on DARK background for better visibility */
 .items-table thead {
-  display: table-header-group; /* ✅ Ensures header repeats on every printed page */
+  display: table-header-group;
+  /* ✅ Ensures header repeats on every printed page */
   background-color: #2c2c2c;
   color: #ffffff;
 }
@@ -272,11 +273,13 @@
   font-weight: 700;
   border: 1px solid #2c2c2c;
   font-size: 10px;
-  color: #ffffff; /* ✅ FIXED: White text for visibility */
+  color: #ffffff;
+  /* ✅ FIXED: White text for visibility */
 }
 
 .items-table tbody {
-  display: table-row-group; /* ✅ Required for proper pagination */
+  display: table-row-group;
+  /* ✅ Required for proper pagination */
 }
 
 .items-table td {
@@ -602,7 +605,9 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media print {
-  html, body {
+
+  html,
+  body {
     width: 210mm;
     margin: 0;
     padding: 0;
@@ -692,7 +697,40 @@
 
 @media (max-width: 768px) {
   .invoice-modal {
-    padding: 10px;
+    padding: 0;
+    align-items: flex-start;
+    /* Align top on mobile */
+  }
+
+  .invoice-modal-content {
+    max-height: 100vh;
+    height: 100%;
+    width: 100%;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .invoice-content {
+    flex: 1;
+    overflow-y: auto;
+    /* Allow scrolling exclusively for content */
+    padding: 15px;
+    /* Add padding for content */
+  }
+
+  /* Force horizontal scroll for tables on small screens to prevent layout breaking */
+  .items-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #ddd;
+    /* Visual cue for table container */
+    margin-bottom: 15px;
+  }
+
+  .items-table {
+    min-width: 600px;
+    /* Force minimum width to keep table readable */
   }
 
   .invoice-header {
@@ -707,46 +745,75 @@
 
   .header-right {
     text-align: left;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    width: 100%;
   }
 
   .seller-buyer-section {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
 
   .totals-section {
     grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .totals-left,
+  .totals-right {
+    width: 100%;
   }
 
   .signature-seal-section {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 20px;
   }
 
   .bank-details-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  .items-table,
-  .items-table th,
-  .items-table td {
-    font-size: 9px;
-    padding: 4px 6px;
-  }
-
+  /* ✅ PREMIUM MOBILE BUTTONS: Visible & Wrapped */
   .invoice-actions {
-    flex-direction: column;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    display: grid;
+    /* Use grid for better control */
+    grid-template-columns: 1fr 1fr;
+    /* 2 buttons per row */
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
+  .btn {
+    width: 100%;
+    /* Full width in grid cell */
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin: 0;
+    /* Clear margins */
+  }
+
+  /* Ensure Close button doesn't have auto margin on mobile */
   .btn-close {
     margin-left: 0;
-  }
-
-  .declaration-section {
-    padding: 10px;
-  }
-
-  .declaration-content {
-    font-size: 9px;
   }
 }
 
@@ -757,15 +824,23 @@
   }
 
   .company-text h1 {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .header-right h2 {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .gst-info-row {
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
   }
+
+  .seller-buyer-section,
+  .totals-section,
+  .signature-seal-section {
+    margin: 10px 0;
+  }
+
+  /* Stack totals table for very narrow screens if needed, usually keeping it normal is better */
 }

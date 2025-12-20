@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import API_CONFIG from '../config/Api';
 import './Login.css';
 
 function Login({ onLoginSuccess }) {
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ Determine mode based on URL
+  const isLogin = location.pathname === '/login' || location.pathname === '/';
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -14,6 +20,12 @@ function Login({ onLoginSuccess }) {
     email: '',
     role: 'ADMIN'
   });
+
+  // ✅ Reset form when switching between Login/Register
+  useEffect(() => {
+    setError('');
+    setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'ADMIN' });
+  }, [isLogin]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -85,11 +97,22 @@ function Login({ onLoginSuccess }) {
         onLoginSuccess(response.data);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed';
-      setError(errorMessage);
+      const status = err.response?.status;
+      // ✅ Handle both Axios response errors and Interceptor-processed errors (err.message)
+      let rawMessage = err.response?.data?.message || err.message || 'Registration failed';
+
+      // ✅ Specific handling for "Username already exists"
+      const lowerMsg = rawMessage.toLowerCase();
+      let finalMessage = rawMessage;
+
+      if (lowerMsg.includes('exist') || lowerMsg.includes('taken') || status === 409 || status === 403) {
+        finalMessage = 'Username or Email already exists. Please login or choose another.';
+      }
+
+      setError(finalMessage);
       console.error('Register error:', {
-        status: err.response?.status,
-        message: errorMessage,
+        status: status,
+        message: rawMessage,
         url: err.config?.url
       });
     } finally {
@@ -102,7 +125,7 @@ function Login({ onLoginSuccess }) {
       {/* Animated Background with Hardware Products */}
       <div className="bg-animation">
         <div className="background-grid"></div>
-        
+
         {/* Product Images with Animation */}
         <div className="products-container">
           <div className="product-image product-1">
@@ -158,9 +181,9 @@ function Login({ onLoginSuccess }) {
       <div className="login-left">
         <div className="brand-section">
           <div className="brand-icon">🏭</div>
-          <h1 className="brand-title">HardWare Pro</h1>
-          <p className="brand-tagline">Wholesale Hardware Solutions</p>
-          
+          <h1 className="brand-title">Shopix</h1>
+          <p className="brand-tagline">Premium Hardware Management</p>
+
           <div className="features">
             <div className="feature-item">
               <span className="feature-icon">⚡</span>
@@ -251,16 +274,12 @@ function Login({ onLoginSuccess }) {
                   </button>
 
                   <div className="form-divider">
-                    <span>New to HardWare Pro?</span>
+                    <span>New to Shopix?</span>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsLogin(false);
-                      setError('');
-                      setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'ADMIN' });
-                    }}
+                    onClick={() => navigate('/register')}
                     className="toggle-btn"
                   >
                     Create Account
@@ -277,11 +296,11 @@ function Login({ onLoginSuccess }) {
 
                   {/* ✅ UNIQUE CLASS NAME */}
                   <div className="login-form-group">
-                    <label>Business Name</label>
+                    <label>Username</label>
                     <input
                       type="text"
                       name="username"
-                      placeholder="Your business name"
+                      placeholder="Your Username"
                       value={formData.username}
                       onChange={handleInputChange}
                       required
@@ -338,11 +357,7 @@ function Login({ onLoginSuccess }) {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsLogin(true);
-                      setError('');
-                      setFormData({ username: '', password: '', confirmPassword: '', email: '', role: 'ADMIN' });
-                    }}
+                    onClick={() => navigate('/login')}
                     className="toggle-btn"
                   >
                     Sign In
