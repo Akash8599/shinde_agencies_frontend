@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import './CompanySettings.css';
 
+
 const CompanySettings = ({ onBackToDashboard }) => {
   const [formData, setFormData] = useState({
     companyName: '',
