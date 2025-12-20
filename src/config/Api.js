@@ -4,7 +4,7 @@
 const API_CONFIG = {
   // Backend API base URL
   // Change this based on your environment
-  BACKEND_URL: process.env.REACT_APP_API_URL || 'https://shinde-agencies-epq5.onrender.com',
+  BACKEND_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080',
 
   // API endpoints
   ENDPOINTS: {

@@ -95,7 +95,7 @@ const Shop = () => {
     try {
       const response = await axiosInstance.post('/api/customers', newCustomer);
       setSuccess('✅ Customer created successfully!');
-      
+
       // Add new customer to list and select it
       setCustomers([...customers, response.data]);
       setSelectedCustomerId(response.data.id);
@@ -298,7 +298,7 @@ const Shop = () => {
       const itemSubtotal = item.quantity * itemPrice;
       const itemStandardSubtotal = item.quantity * itemStandardPrice;
       const itemTax = (itemSubtotal * item.gstRate) / 100;
-      
+
       subtotal += itemSubtotal;
       totalTax += itemTax;
       totalSavings += itemStandardSubtotal - itemSubtotal;
@@ -391,7 +391,7 @@ const Shop = () => {
     if (!product) return false;
     const productName = product.productName || product.name || '';
     const sku = product.sku || '';
-    
+
     return (
       productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sku.toLowerCase().includes(searchTerm.toLowerCase())
@@ -420,7 +420,7 @@ const Shop = () => {
           <p className="shop-subtitle">Set custom prices for each product</p>
         </div>
         <div className="header-actions">
-          <button 
+          <button
             onClick={() => setShowCartModal(true)}
             className="cart-button"
           >
@@ -484,7 +484,7 @@ const Shop = () => {
 
                 {/* Product Name */}
                 <h3 className="product-name-final">{productName}</h3>
-                
+
                 {/* Description */}
                 <p className="product-description-final">{productDesc}</p>
 
@@ -574,7 +574,7 @@ const Shop = () => {
           <div className="modal-content-modern" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-modern">
               <h3>🛒 Shopping Cart</h3>
-              <button 
+              <button
                 onClick={() => setShowCartModal(false)}
                 className="close-btn-modern"
               >
@@ -646,7 +646,7 @@ const Shop = () => {
                     <div className="customer-form-modal" onClick={(e) => e.stopPropagation()}>
                       <div className="customer-form-modal-header">
                         <h3>➕ Add New Customer</h3>
-                        <button 
+                        <button
                           type="button"
                           className="close-form-btn"
                           onClick={() => setShowNewCustomerForm(false)}
@@ -814,7 +814,7 @@ const Shop = () => {
                           <span className="qty-display">{item.quantity}</span>
                           <button onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}>+</button>
                           <span className="item-total">₹{(item.quantity * parseFloat(item.sellingPrice)).toFixed(2)}</span>
-                          <button 
+                          <button
                             onClick={() => handleRemoveFromCart(item.productId)}
                             className="btn-remove-item"
                           >
@@ -855,14 +855,14 @@ const Shop = () => {
                   {/* Order Form */}
                   <form onSubmit={handleCreateSalesOrder} className="customer-form-modern">
                     <div className="form-actions-modern">
-                      <button 
+                      <button
                         type="submit"
                         className="btn-create-order"
                         disabled={creatingOrder || !selectedCustomerId}
                       >
                         {creatingOrder ? 'Creating...' : '📋 Create Order'}
                       </button>
-                      <button 
+                      <button
                         type="button"
                         onClick={handleClearCart}
                         className="btn-clear-cart"
@@ -882,13 +882,13 @@ const Shop = () => {
       {showInvoice && createdOrderId && (
         <div className="invoice-modal-overlay">
           <div className="invoice-modal-container">
-            <button 
+            <button
               className="invoice-close-btn"
               onClick={() => setShowInvoice(false)}
             >
               ✕
             </button>
-            <InvoiceGenerator 
+            <InvoiceGenerator
               orderId={createdOrderId}
               onClose={() => setShowInvoice(false)}
             />

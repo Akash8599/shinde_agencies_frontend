@@ -14,22 +14,22 @@
   --white-off: #f8f9fa;
   --gray-light: #e9ecef;
   --gray-medium: #a8b2c1;
-  
+
   /* Status Colors */
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  
+
   /* Shadows - 3D Depth */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.35);
   --shadow-3d: 0 20px 60px rgba(0, 0, 0, 0.4);
-  
+
   /* Transitions */
   --transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-quick: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Typography */
   --font-display: 'Georgia', 'Garamond', serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
@@ -57,7 +57,6 @@ body {
   background: var(--navy-dark);
   padding: 24px 20px;
   position: relative;
-  overflow-x: hidden;
 }
 
 .purchase-order-management::before {
@@ -68,7 +67,7 @@ body {
   right: 0;
   bottom: 0;
   background: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(45, 62, 82, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(45, 62, 82, 0.08) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -102,6 +101,7 @@ body {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -132,6 +132,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -171,7 +172,8 @@ body {
 .btn-create-po {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  /* Reduced gap */
   padding: 10px 22px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
@@ -294,8 +296,13 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-spinner p {
@@ -321,8 +328,15 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 .empty-state h3 {
@@ -352,6 +366,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -484,13 +499,13 @@ body {
   transform: translateY(-2px);
 }
 
-.receive-btn:hover { 
+.receive-btn:hover {
   background: rgba(16, 185, 129, 0.15);
   border-color: var(--success);
   color: var(--success);
 }
 
-.cancel-btn:hover { 
+.cancel-btn:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: var(--danger);
   color: var(--danger);
@@ -509,7 +524,10 @@ body {
   align-items: center;
   gap: 8px;
   padding: 9px 14px;
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(10, 20, 40, 0.8);
+  /* Semi-transparent dark bg */
+  backdrop-filter: blur(8px);
+  /* Blur effect */
   border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 7px;
   color: var(--gold-light);
@@ -518,12 +536,22 @@ body {
   cursor: pointer;
   margin-bottom: 16px;
   transition: var(--transition-quick);
+  position: sticky;
+  /* Make it stick */
+  top: 20px;
+  /* Space from top */
+  z-index: 900;
+  /* Ensure visibility */
+  width: fit-content;
 }
 
 .btn-back:hover {
   background: rgba(212, 175, 55, 0.15);
   border-color: var(--gold-primary);
   color: var(--gold-primary);
+  transform: translateY(0);
+  /* Don't move if sticky, just glow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* ✅ UNIQUE PO FORM CONTAINER */
@@ -752,9 +780,64 @@ body {
 
 .po-item-fields {
   display: grid;
-  grid-template-columns: 1.5fr 0.7fr 1fr 1fr 26px;
-  gap: 7px;
-  align-items: flex-end;
+  grid-template-columns: 3fr 0.6fr 0.8fr 0.8fr 30px;
+  /* Minimize qty/cost, Maximize Product */
+  gap: 12px;
+  /* Cleaner spacing */
+  align-items: flex-start;
+  /* CRITICAL: Align tops so inputs stay consistent */
+}
+
+/* ... existing inputs ... */
+
+/* Remove Button Alignment */
+.btn-remove-item {
+  margin-top: 18px;
+  /* Precise align with labels (~15px) + gap */
+  height: 38px;
+  /* Match inputs */
+  width: 30px;
+  /* Square-ish */
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  cursor: pointer;
+  transition: var(--transition-quick);
+}
+
+.btn-remove-item:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* Enforce consistent height for alignment */
+.po-item-fields input.po-form-input,
+.po-product-select-btn,
+.po-item-total {
+  height: 38px;
+  /* Fixed sleek height */
+  padding: 0 12px !important;
+  /* Center text vertically */
+  display: flex;
+  align-items: center;
+  font-size: 13px !important;
+}
+
+/* Item Total Specifics */
+.po-item-total {
+  background-color: rgba(212, 175, 55, 0.05);
+  /* Slight gold tint for total */
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 8px;
+  color: var(--gold-primary);
+  font-weight: 700;
+  width: 100%;
 }
 
 /* ✅ UNIQUE PO QUANTITY & COST PRICE INPUTS */
@@ -796,6 +879,248 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PREMIUM PRODUCT DROPDOWN (Added)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ✅ UNIQUE PO PRODUCT SELECTOR & WRAPPER */
+.po-field-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.po-product-selector {
+  position: relative;
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+/* Futuristic "New Product" Button */
+.btn-create-product-inline {
+  height: 38px;
+  /* Match inputs */
+  padding: 0 12px;
+  background: rgba(212, 175, 55, 0.1);
+  /* Glassy Gold */
+  border: 1px solid var(--gold-primary);
+  border-radius: 6px;
+  color: var(--gold-primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.btn-create-product-inline:hover {
+  background: var(--gold-primary);
+  color: var(--navy-dark);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+  /* Neon Glow */
+  transform: translateY(-1px);
+}
+
+
+/* Stock Display */
+.po-item-stock-display {
+  font-size: 11px;
+  margin-top: 6px;
+  color: var(--gray-medium);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stock-value {
+  color: #10b981;
+  /* Green */
+  font-weight: 700;
+  font-style: normal;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ✅ PREMIUM SEARCH DROPDOWN */
+.po-product-search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  /* Dropdown matches full width of selector (input + btn area) */
+  min-width: 320px;
+  background: #0a1428;
+  border: 1px solid var(--gold-primary);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.po-product-search-header {
+  padding: 12px;
+  background: rgba(212, 175, 55, 0.08);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.po-product-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  /* Larger touch target */
+  background: var(--navy-light);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.po-product-search-input:focus {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+  background: var(--navy-accent);
+}
+
+/* ✅ SCROLLABLE PRODUCT LIST */
+.po-product-list {
+  max-height: 320px;
+  /* Taller visibility */
+  overflow-y: auto;
+  background: var(--navy-dark);
+}
+
+/* Custom Scrollbar */
+.po-product-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.po-product-list::-webkit-scrollbar-track {
+  background: #0a1428;
+}
+
+.po-product-list::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 4px;
+  border: 2px solid #0a1428;
+}
+
+.po-product-list::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+.po-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 18px;
+  /* Roomy padding */
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--gray-light);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 15px;
+}
+
+.po-product-item:last-child {
+  border-bottom: none;
+}
+
+.po-product-item:hover {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.15), transparent);
+  padding-left: 22px;
+  color: var(--white-pure);
+}
+
+.po-product-item.selected {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--gold-primary);
+  border-left: 4px solid var(--gold-primary);
+}
+
+.po-product-item-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.po-product-item-name {
+  font-size: 16px;
+  /* BIG TEXT as requested */
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--white-pure);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
+}
+
+.po-product-item-sku {
+  font-size: 12px;
+  color: var(--gold-light);
+  font-family: monospace;
+  opacity: 0.9;
+}
+
+.po-product-item-price {
+  font-weight: 800;
+  color: #10b981;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.po-product-empty {
+  padding: 30px;
+  text-align: center;
+  color: var(--gray-medium);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Hide old footer */
+.po-dropdown-footer {
+  display: none;
+}
+
+/* Click Overlay (Invisible) */
+.click-outside-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  background: transparent;
+  cursor: default;
 }
 
 .po-field-group .po-form-label {
@@ -857,6 +1182,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1345,6 +1671,7 @@ body {
     opacity: 0;
     transform: translateY(40px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
