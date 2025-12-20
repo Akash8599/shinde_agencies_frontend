@@ -3,6 +3,7 @@ import axiosInstance from '../utils/axiosInstance';
 import InvoiceGenerator from './InvoiceGenerator';
 import './Shop.css';
 
+
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
@@ -16,7 +17,7 @@ const Shop = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState(null);
 
-  // Custom prices for products (productId -> price)
+  // Custom prices for products (productId -> price) - NOW WITH DECIMAL SUPPORT
   const [customPrices, setCustomPrices] = useState({});
 
   // ✅ CUSTOMER MANAGEMENT
@@ -157,7 +158,7 @@ const Shop = () => {
     localStorage.setItem('shopCart', JSON.stringify(cart));
   }, [cart]);
 
-  // Handle custom price change - real-time calculation
+  // Handle custom price change - real-time calculation with DECIMAL support
   const handlePriceChange = (productId, price) => {
     if (price === '' || price === null) {
       const newPrices = { ...customPrices };
@@ -171,24 +172,24 @@ const Shop = () => {
     }
   };
 
-  // Get actual price (custom or standard)
+  // Get actual price (custom or standard) - WITH DECIMAL SUPPORT
   const getActualPrice = (product) => {
     if (customPrices[product.id]) {
-      return customPrices[product.id];
+      return parseFloat(customPrices[product.id]);
     }
-    return product.sellingPrice || 0;
+    return parseFloat(product.sellingPrice) || 0;
   };
 
-  // Calculate savings for display
+  // Calculate savings for display - WITH DECIMAL SUPPORT
   const calculateSavings = (product) => {
-    const standardPrice = product.sellingPrice || 0;
+    const standardPrice = parseFloat(product.sellingPrice) || 0;
     const actualPrice = getActualPrice(product);
     const saving = standardPrice - actualPrice;
     const savingPercent = standardPrice > 0 ? ((saving / standardPrice) * 100).toFixed(0) : 0;
     return { saving, savingPercent };
   };
 
-  // Handle add to cart
+  // Handle add to cart - WITH DECIMAL SUPPORT
   const handleAddToCart = (product, quantity) => {
     if (!quantity || quantity <= 0) {
       setError('Please enter a valid quantity');
@@ -198,9 +199,9 @@ const Shop = () => {
     const productStock = product.quantity || 0;
     const productName = product.productName || product.name || 'Product';
     const actualPrice = getActualPrice(product);
-    const standardPrice = product.sellingPrice || 0;
+    const standardPrice = parseFloat(product.sellingPrice) || 0;
     const productGst = product.gstRate || 18;
-    const productCost = product.costPrice || 0;
+    const productCost = parseFloat(product.costPrice) || 0;
     const productSku = product.sku || 'N/A';
     const productDesc = product.description || '';
 
@@ -282,15 +283,17 @@ const Shop = () => {
     }
   };
 
-  // Calculate totals
+  // Calculate totals - WITH DECIMAL SUPPORT
   const calculateTotals = () => {
     let subtotal = 0;
     let totalTax = 0;
     let totalSavings = 0;
 
     cart.forEach(item => {
-      const itemSubtotal = item.quantity * item.sellingPrice;
-      const itemStandardSubtotal = item.quantity * item.standardPrice;
+      const itemPrice = parseFloat(item.sellingPrice);
+      const itemStandardPrice = parseFloat(item.standardPrice);
+      const itemSubtotal = item.quantity * itemPrice;
+      const itemStandardSubtotal = item.quantity * itemStandardPrice;
       const itemTax = (itemSubtotal * item.gstRate) / 100;
       
       subtotal += itemSubtotal;
@@ -313,7 +316,7 @@ const Shop = () => {
     customer.phone.includes(customerSearchTerm)
   );
 
-  // Create sales order
+  // Create sales order - WITH DECIMAL SUPPORT
   const handleCreateSalesOrder = async (e) => {
     e.preventDefault();
     setError('');
@@ -343,7 +346,7 @@ const Shop = () => {
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          sellingPrice: item.sellingPrice,
+          sellingPrice: parseFloat(item.sellingPrice),
           gstRate: item.gstRate
         }))
       };
@@ -455,7 +458,7 @@ const Shop = () => {
             const productName = product.productName || product.name || 'Unknown Product';
             const productSku = product.sku || 'N/A';
             const productDesc = product.description || 'No description';
-            const standardPrice = product.sellingPrice || 0;
+            const standardPrice = parseFloat(product.sellingPrice) || 0;
             const productGst = product.gstRate || 18;
             const productStock = product.quantity || 0;
             const actualPrice = getActualPrice(product);
@@ -489,11 +492,11 @@ const Shop = () => {
                   </span>
                 </div>
 
-                {/* Price Section with Custom Price Input */}
+                {/* Price Section with Custom Price Input - DECIMAL SUPPORT */}
                 <div className="price-section-final">
                   <div className="price-row-final">
                     <span className="price-label-final">Standard Price:</span>
-                    <span className="standard-price-final">₹{standardPrice.toFixed(0)}</span>
+                    <span className="standard-price-final">₹{standardPrice.toFixed(2)}</span>
                   </div>
 
                   <div className="custom-price-wrapper">
@@ -504,6 +507,7 @@ const Shop = () => {
                         type="number"
                         min="0"
                         max="999999"
+                        step="0.01"
                         placeholder="Enter price"
                         value={customPrices[product.id] || ''}
                         onChange={(e) => handlePriceChange(product.id, e.target.value)}
@@ -517,14 +521,14 @@ const Shop = () => {
                       <span className="savings-label">
                         {saving > 0 ? '💰 Save' : '📈 Extra'}
                       </span>
-                      <span className="savings-amount-final">₹{Math.abs(saving).toFixed(0)}</span>
+                      <span className="savings-amount-final">₹{Math.abs(saving).toFixed(2)}</span>
                       <span className="savings-percent-final">{savingPercent}%</span>
                     </div>
                   )}
 
                   <div className="final-price-display">
                     <span className="final-price-label">Your Price:</span>
-                    <span className="final-price-value">₹{actualPrice.toFixed(0)}</span>
+                    <span className="final-price-value">₹{actualPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -632,109 +636,124 @@ const Shop = () => {
                   </div>
                 )}
 
-                {/* ✅ NEW CUSTOMER FORM */}
+                {/* ✅ NEW CUSTOMER FORM - MODAL WITH BLUR BACKGROUND */}
                 {showNewCustomerForm && (
-                  <form className="new-customer-form" onSubmit={handleCreateNewCustomer}>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Full Name *</label>
-                        <input
-                          type="text"
-                          value={newCustomer.name}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                          placeholder="Customer name"
-                          required
-                        />
+                  <div className="customer-form-modal-overlay" onClick={() => setShowNewCustomerForm(false)}>
+                    <div className="customer-form-modal" onClick={(e) => e.stopPropagation()}>
+                      <div className="customer-form-modal-header">
+                        <h3>➕ Add New Customer</h3>
+                        <button 
+                          type="button"
+                          className="close-form-btn"
+                          onClick={() => setShowNewCustomerForm(false)}
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <div className="form-group">
-                        <label>Email *</label>
-                        <input
-                          type="email"
-                          value={newCustomer.email}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                          placeholder="email@example.com"
-                          required
-                        />
-                      </div>
-                    </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Phone *</label>
-                        <input
-                          type="tel"
-                          value={newCustomer.phone}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                          placeholder="9876543210"
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>City</label>
-                        <input
-                          type="text"
-                          value={newCustomer.city}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
-                          placeholder="City"
-                        />
-                      </div>
-                    </div>
+                      <form className="new-customer-form" onSubmit={handleCreateNewCustomer}>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Full Name *</label>
+                            <input
+                              type="text"
+                              value={newCustomer.name}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                              placeholder="Customer name"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Email *</label>
+                            <input
+                              type="email"
+                              value={newCustomer.email}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                              placeholder="email@example.com"
+                              required
+                            />
+                          </div>
+                        </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>GSTIN/UIN</label>
-                        <input
-                          type="text"
-                          value={newCustomer.gstin}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, gstin: e.target.value })}
-                          placeholder="27ABCDE1234F1Z5"
-                          maxLength="15"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>State</label>
-                        <input
-                          type="text"
-                          value={newCustomer.state}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}
-                          placeholder="State"
-                        />
-                      </div>
-                    </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Phone *</label>
+                            <input
+                              type="tel"
+                              value={newCustomer.phone}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                              placeholder="9876543210"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>City</label>
+                            <input
+                              type="text"
+                              value={newCustomer.city}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
+                              placeholder="City"
+                            />
+                          </div>
+                        </div>
 
-                    <div className="form-group">
-                      <label>Address</label>
-                      <textarea
-                        value={newCustomer.address}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                        placeholder="Street address"
-                        rows="2"
-                      />
-                    </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>GSTIN/UIN</label>
+                            <input
+                              type="text"
+                              value={newCustomer.gstin}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, gstin: e.target.value })}
+                              placeholder="27ABCDE1234F1Z5"
+                              maxLength="15"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>State</label>
+                            <input
+                              type="text"
+                              value={newCustomer.state}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}
+                              placeholder="State"
+                            />
+                          </div>
+                        </div>
 
-                    <div className="form-group">
-                      <label>Pincode</label>
-                      <input
-                        type="text"
-                        value={newCustomer.pincode}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, pincode: e.target.value })}
-                        placeholder="413102"
-                      />
-                    </div>
+                        <div className="form-group">
+                          <label>Address</label>
+                          <textarea
+                            value={newCustomer.address}
+                            onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                            placeholder="Street address"
+                            rows="2"
+                          />
+                        </div>
 
-                    <div className="form-actions">
-                      <button type="submit" className="btn-create-customer">
-                        ✅ Create Customer
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-cancel-customer"
-                        onClick={() => setShowNewCustomerForm(false)}
-                      >
-                        ❌ Cancel
-                      </button>
+                        <div className="form-group">
+                          <label>Pincode</label>
+                          <input
+                            type="text"
+                            value={newCustomer.pincode}
+                            onChange={(e) => setNewCustomer({ ...newCustomer, pincode: e.target.value })}
+                            placeholder="413102"
+                          />
+                        </div>
+
+                        <div className="form-actions">
+                          <button type="submit" className="btn-create-customer">
+                            ✅ Create Customer
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-cancel-customer"
+                            onClick={() => setShowNewCustomerForm(false)}
+                          >
+                            ❌ Cancel
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+                  </div>
                 )}
 
                 {/* ✅ SELECTED CUSTOMER DISPLAY */}
@@ -753,7 +772,7 @@ const Shop = () => {
                 )}
               </div>
 
-              {/* Cart Items */}
+              {/* Cart Items - DECIMAL SUPPORT */}
               <div className="cart-items-section">
                 <h4>Items ({cart.length})</h4>
                 {cart.length === 0 ? (
@@ -764,16 +783,16 @@ const Shop = () => {
                       <div key={item.productId} className="cart-item-modern">
                         <div className="item-info">
                           <h5>{item.productName}</h5>
-                          <p className="item-price">₹{item.sellingPrice.toFixed(0)} × {item.quantity}</p>
+                          <p className="item-price">₹{parseFloat(item.sellingPrice).toFixed(2)} × {item.quantity}</p>
                           {item.standardPrice > item.sellingPrice && (
-                            <p className="item-savings">💰 Save: ₹{((item.standardPrice - item.sellingPrice) * item.quantity).toFixed(0)}</p>
+                            <p className="item-savings">💰 Save: ₹{((parseFloat(item.standardPrice) - parseFloat(item.sellingPrice)) * item.quantity).toFixed(2)}</p>
                           )}
                         </div>
                         <div className="item-controls">
                           <button onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}>−</button>
                           <span className="qty-display">{item.quantity}</span>
                           <button onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}>+</button>
-                          <span className="item-total">₹{(item.quantity * item.sellingPrice).toFixed(0)}</span>
+                          <span className="item-total">₹{(item.quantity * parseFloat(item.sellingPrice)).toFixed(2)}</span>
                           <button 
                             onClick={() => handleRemoveFromCart(item.productId)}
                             className="btn-remove-item"
@@ -787,28 +806,28 @@ const Shop = () => {
                 )}
               </div>
 
-              {/* Cart Summary & Order Form */}
+              {/* Cart Summary & Order Form - DECIMAL SUPPORT */}
               {cart.length > 0 && (
                 <>
                   {/* Summary */}
                   <div className="order-summary-modern">
                     <div className="summary-row">
                       <span>Subtotal</span>
-                      <span>₹{totals.subtotal.toFixed(0)}</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="summary-row">
                       <span>GST (Tax)</span>
-                      <span>₹{totals.tax.toFixed(0)}</span>
+                      <span>₹{totals.tax.toFixed(2)}</span>
                     </div>
                     {totals.savings > 0 && (
                       <div className="summary-row savings">
                         <span>💰 Total Savings</span>
-                        <span>₹{totals.savings.toFixed(0)}</span>
+                        <span>₹{totals.savings.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="summary-row total">
                       <span>Total</span>
-                      <span>₹{totals.total.toFixed(0)}</span>
+                      <span>₹{totals.total.toFixed(2)}</span>
                     </div>
                   </div>
 

@@ -20,7 +20,7 @@ function App() {
     if (token && username && userRole) {
       // Set axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       setUser({ username, role: userRole });
       setIsAuthenticated(true);
     }
@@ -77,14 +77,14 @@ function App() {
   return (
     <div className="App">
       {currentPage === 'dashboard' && (
-        <Dashboard 
-          user={user} 
+        <Dashboard
+          user={user}
           onLogout={handleLogout}
           onNavigateToSettings={handleNavigateToSettings}
         />
       )}
       {currentPage === 'settings' && (
-        <CompanySettings 
+        <CompanySettings
           onBackToDashboard={handleBackToDashboard}
         />
       )}

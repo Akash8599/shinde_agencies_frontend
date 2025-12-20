@@ -661,7 +661,7 @@ textarea {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--surface);
+  /* background: var(--surface); */
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);

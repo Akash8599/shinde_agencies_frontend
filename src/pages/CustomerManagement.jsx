@@ -93,6 +93,7 @@ const CustomerManagement = () => {
       address: '',
       city: '',
       state: '',
+      statecode: '',
       pincode: '',
       gstin: '' // ✅ Reset GSTIN
     });
@@ -170,7 +171,8 @@ const CustomerManagement = () => {
       city: customer.city || '',
       state: customer.state || '',
       pincode: customer.pincode || '',
-      gstin: customer.gstin || '' // ✅ Load GSTIN
+      gstin: customer.gstin || '', // ✅ Load GSTIN
+      statecode: customer.statecode || ''
     });
     setEditingId(customer.id);
     setShowForm(true);
@@ -257,12 +259,12 @@ const CustomerManagement = () => {
 
       {/* ✅ ENHANCED FORM */}
       {showForm && (
-        <div className="form-container">
-          <div className="form-card">
+        <div className="customer-form-container">
+          <div className="customer-form-card">
             <h2>{editingId ? '✏️ Edit Customer' : '➕ Add New Customer'}</h2>
             <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
+              <div className="customer-form-row">
+                <div className="customer-form-group">
                   <label>Name *</label>
                   <input
                     type="text"
@@ -273,7 +275,7 @@ const CustomerManagement = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="customer-form-group">
                   <label>Email *</label>
                   <input
                     type="email"
@@ -286,8 +288,8 @@ const CustomerManagement = () => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="customer-form-row">
+                <div className="customer-form-group">
                   <label>Phone *</label>
                   <input
                     type="tel"
@@ -298,7 +300,7 @@ const CustomerManagement = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="customer-form-group">
                   <label>City *</label>
                   <input
                     type="text"
@@ -312,8 +314,8 @@ const CustomerManagement = () => {
               </div>
 
               {/* ✅ NEW: GSTIN/UIN Field */}
-              <div className="form-row">
-                <div className="form-group">
+              <div className="customer-form-row">
+                <div className="customer-form-group">
                   <label>GSTIN/UIN</label>
                   <input
                     type="text"
@@ -325,7 +327,7 @@ const CustomerManagement = () => {
                   />
                   <small className="field-hint">GST Registration or Unique ID Number</small>
                 </div>
-                <div className="form-group">
+                <div className="customer-form-group">
                   <label>State *</label>
                   <input
                     type="text"
@@ -338,7 +340,7 @@ const CustomerManagement = () => {
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="customer-form-group">
                 <label>Address</label>
                 <textarea
                   name="address"
@@ -349,8 +351,8 @@ const CustomerManagement = () => {
                 />
               </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="customer-form-row">
+                  <div className="customer-form-group">
                     <label>StateCode *</label>
                     <input
                       type="text"
@@ -363,8 +365,8 @@ const CustomerManagement = () => {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="customer-form-row">
+                  <div className="customer-form-group">
                     <label>Pincode *</label>
                     <input
                       type="text"
@@ -377,11 +379,11 @@ const CustomerManagement = () => {
                   </div>
                 </div>
 
-                <div className="form-actions">
-                  <button type="submit" className="btn-submit">
+                <div className="customer-form-actions">
+                  <button type="submit" className="btn-customer-submit">
                     {editingId ? '💾 Update Customer' : '✅ Add Customer'}
                   </button>
-                  <button type="button" className="btn-cancel" onClick={resetForm}>
+                  <button type="button" className="btn-customer-cancel" onClick={resetForm}>
                     ❌ Cancel
                   </button>
                 </div>
@@ -392,8 +394,8 @@ const CustomerManagement = () => {
 
       {/* ✅ NEW: Delete Confirmation Modal */}
       {showDeleteModal && deleteTarget && (
-        <div className="delete-modal-overlay">
-          <div className="delete-modal">
+        <div className="customer-delete-modal-overlay">
+          <div className="customer-delete-modal">
             <div className="delete-modal-icon">🗑️</div>
             <h3>Delete Customer?</h3>
             <p className="delete-confirmation-text">
@@ -426,16 +428,16 @@ const CustomerManagement = () => {
               )}
             </div>
 
-            <div className="delete-modal-actions">
+            <div className="customer-delete-modal-actions">
               <button
-                className="btn-confirm-delete"
+                className="btn-customer-confirm-delete"
                 onClick={confirmDelete}
                 disabled={isDeleting}
               >
                 {isDeleting ? '⏳ Deleting...' : '🗑️ Delete Customer'}
               </button>
               <button
-                className="btn-cancel-delete"
+                className="btn-customer-cancel-delete"
                 onClick={() => {
                   setShowDeleteModal(false);
                   setDeleteTarget(null);
@@ -450,14 +452,14 @@ const CustomerManagement = () => {
       )}
 
       {/* ✅ ENHANCED SEARCH */}
-      <div className="search-container">
-        <div className="search-wrapper">
+      <div className="customer-search-container">
+        <div className="customer-search-wrapper">
           <input
             type="text"
             placeholder="🔍 Search by name, email or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+            className="customer-search-input"
           />
         </div>
         <span className="result-count">
@@ -482,6 +484,7 @@ const CustomerManagement = () => {
                 <th>GSTIN</th>
                 <th>City</th>
                 <th>State</th>
+                <th>State Code</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -494,16 +497,17 @@ const CustomerManagement = () => {
                   <td className="gstin">{customer.gstin || '-'}</td>
                   <td className="city">{customer.city || '-'}</td>
                   <td className="state">{customer.state || '-'}</td>
+                  <td className="state-code">{customer.statecode || '-'}</td>
                   <td className="actions">
                     <button
-                      className="btn-edit"
+                      className="btn-customer-edit"
                       onClick={() => handleEdit(customer)}
                       title="Edit customer"
                     >
                       ✏️ Edit
                     </button>
                     <button
-                      className="btn-delete"
+                      className="btn-customer-delete"
                       onClick={() => openDeleteModal(customer)}
                       title="Delete customer"
                     >

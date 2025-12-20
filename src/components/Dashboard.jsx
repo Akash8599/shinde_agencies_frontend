@@ -7,7 +7,7 @@ import PurchaseOrderManagement from '../pages/PurchaseOrderManagement';
 import CompanySettings from '../pages/CompanySettings';
 import API_CONFIG from '../config/Api';
 import './Dashboard.css';
-
+import './Dashboard-Tailwind.css';
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPER: Safe JSON Parse
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -16,11 +16,11 @@ const safeJsonParse = (text) => {
   try {
     if (!text) return null;
     if (typeof text !== 'string') return text;
-    
+
     if (text.trim().startsWith('<')) {
       return null;
     }
-    
+
     return JSON.parse(text);
   } catch (error) {
     return null;
@@ -33,6 +33,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     if (user) {
@@ -46,6 +47,15 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
     }
     setLoading(false);
   }, [user]);
+
+  // ✅ NEW: Live timestamp update - updates every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Close mobile menu when view changes
   const handleNavClick = (view) => {
@@ -78,11 +88,24 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
     return <div className="loading">Loading...</div>;
   }
 
+  // ✅ Format time for display
+  const formatTime = (date) => {
+    return date.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
     <div className="dashboard-container">
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="mobile-menu-overlay"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -90,9 +113,9 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
-          <h2>🛍️ Shop Manager</h2>
+          <h2>Shopix</h2>
           <p className="user-info">👤 {userName}</p>
-          <p className="role-badge">Role: {userRole}</p>
+          <p className="role-badge">{userRole}</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -167,24 +190,17 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
       <main className="main-content">
         <header className="top-bar">
           <div className="top-bar-left">
-            <button 
+            <button
               className="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               ☰
             </button>
-            <h1>🏪 Shop Owner Dashboard</h1>
+            <h1>🏪 SHINDE AGENCIES</h1>
           </div>
           <div className="header-actions">
             <span className="timestamp">
-              {new Date().toLocaleDateString('en-IN', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {formatTime(currentTime)}
             </span>
           </div>
         </header>
@@ -198,7 +214,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HOME VIEW - DASHBOARD WITH STATS
+// HOME VIEW - DASHBOARD WITH STATS & AGENCY SHOWCASE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const HomeView = ({ setCurrentView }) => {
@@ -211,7 +227,7 @@ const HomeView = ({ setCurrentView }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [companyName, setCompanyName] = useState('Your Shop');
+  const [companyName, setCompanyName] = useState('SHINDE AGENCIES');
 
   useEffect(() => {
     fetchDashboardStats();
@@ -281,16 +297,16 @@ const HomeView = ({ setCurrentView }) => {
       // ✅ FETCH PRODUCTS using config endpoints
       try {
         const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.PRODUCTS}`;
-        const productsRes = await fetch(url, { 
+        const productsRes = await fetch(url, {
           method: 'GET',
-          headers 
+          headers
         });
 
         if (productsRes.status === 304) {
           totalProducts = 0;
         } else if (productsRes.ok) {
           const text = await productsRes.text();
-          
+
           if (text.trim().startsWith('<')) {
             totalProducts = 0;
           } else {
@@ -307,9 +323,9 @@ const HomeView = ({ setCurrentView }) => {
       // ✅ FETCH SALES ORDERS SUMMARY using config endpoints
       try {
         const url = `${API_CONFIG.BACKEND_URL}/api/sales-orders/summary/all`;
-        const ordersRes = await fetch(url, { 
+        const ordersRes = await fetch(url, {
           method: 'GET',
-          headers 
+          headers
         });
 
         if (ordersRes.status === 304) {
@@ -318,7 +334,7 @@ const HomeView = ({ setCurrentView }) => {
           unpaidOrders = 0;
         } else if (ordersRes.ok) {
           const text = await ordersRes.text();
-          
+
           if (text.trim().startsWith('<')) {
             totalOrders = 0;
             totalRevenue = 0;
@@ -343,16 +359,16 @@ const HomeView = ({ setCurrentView }) => {
       // ✅ FETCH CUSTOMERS using config endpoints
       try {
         const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.CUSTOMERS}`;
-        const customersRes = await fetch(url, { 
+        const customersRes = await fetch(url, {
           method: 'GET',
-          headers 
+          headers
         });
 
         if (customersRes.status === 304) {
           totalCustomers = 0;
         } else if (customersRes.ok) {
           const text = await customersRes.text();
-          
+
           if (text.trim().startsWith('<')) {
             totalCustomers = 0;
           } else {
@@ -396,6 +412,7 @@ const HomeView = ({ setCurrentView }) => {
 
   return (
     <div className="home-view">
+      {/* HERO SECTION */}
       <section className="hero-section">
         <div className="shop-name">
           <h1>
@@ -403,37 +420,23 @@ const HomeView = ({ setCurrentView }) => {
             {companyName}
           </h1>
         </div>
-        <p className="shop-subtitle">Welcome to your dashboard! Manage your business with ease.</p>
+        <p className="shop-subtitle">Professional Business Management Platform</p>
       </section>
 
+      {/* STATISTICS SECTION */}
       <div className="stats-content">
         <div className="stats-intro">
           <h2>Business Overview</h2>
-          <p>Real-time statistics from your store</p>
+          <p>Real-time statistics from your operations</p>
         </div>
 
         {error && (
-          <div style={{
-            padding: '16px',
-            marginBottom: '24px',
-            background: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '8px',
-            color: '#c33'
-          }}>
-            <strong>Error:</strong> {error}
-            <button 
-              onClick={() => fetchDashboardStats()}
-              style={{
-                marginLeft: '12px',
-                padding: '6px 12px',
-                background: '#c33',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+          <div className="error-message">
+            <div>
+              <strong>⚠️ Error Loading Data</strong>
+              {error}
+            </div>
+            <button onClick={() => fetchDashboardStats()}>
               Retry
             </button>
           </div>
@@ -443,20 +446,21 @@ const HomeView = ({ setCurrentView }) => {
           <div className="loading">Loading statistics...</div>
         ) : (
           <>
+            {/* STAT CARDS - 3D EFFECTS */}
             <div className="stats-grid">
-              <div className="stat-card primary">
+              <div className="stat-card">
                 <h3>📦 Total Products</h3>
                 <p className="stat-value">{stats.totalProducts}</p>
-                <p className="stat-label">In catalog</p>
+                <p className="stat-label">In Catalog</p>
               </div>
 
-              <div className="stat-card success">
+              <div className="stat-card">
                 <h3>📋 Total Orders</h3>
                 <p className="stat-value">{stats.totalOrders}</p>
                 <p className="stat-label">Placed</p>
               </div>
 
-              <div className="stat-card info">
+              <div className="stat-card">
                 <h3>💰 Total Revenue</h3>
                 <p className="stat-value">
                   {formatCurrency(stats.totalRevenue).replace(API_CONFIG.DEFAULTS.CURRENCY_SYMBOL, '')}
@@ -464,41 +468,42 @@ const HomeView = ({ setCurrentView }) => {
                 <p className="stat-label">Earned</p>
               </div>
 
-              <div className="stat-card warning">
+              <div className="stat-card">
                 <h3>👥 Customers</h3>
                 <p className="stat-value">{stats.totalCustomers}</p>
                 <p className="stat-label">Active</p>
               </div>
 
-              <div className="stat-card danger">
+              <div className="stat-card">
                 <h3>⏳ Pending Orders</h3>
                 <p className="stat-value">{stats.pendingOrders}</p>
                 <p className="stat-label">Awaiting Payment</p>
               </div>
             </div>
 
+            {/* QUICK ACTIONS */}
             <div className="quick-actions">
               <h3>Quick Actions</h3>
               <div className="actions-grid">
-                <button 
+                <button
                   onClick={() => setCurrentView('products')}
                   className="action-btn"
                 >
                   ➕ Add Product
                 </button>
-                <button 
+                <button
                   onClick={() => setCurrentView('orders')}
                   className="action-btn"
                 >
                   📋 View Orders
                 </button>
-                <button 
+                <button
                   onClick={() => setCurrentView('customers')}
                   className="action-btn"
                 >
                   👥 Customers
                 </button>
-                <button 
+                <button
                   onClick={() => setCurrentView('purchase')}
                   className="action-btn"
                 >
@@ -509,6 +514,49 @@ const HomeView = ({ setCurrentView }) => {
           </>
         )}
       </div>
+
+      {/* AGENCY/COMPANY SHOWCASE SECTION */}
+      <section className="agency-showcase">
+        <div className="agency-header">
+          <h2>Team & Leadership</h2>
+          <p>Meet the professionals behind your success</p>
+        </div>
+
+        <div className="agency-cards">
+          {/* Leadership Card 1 */}
+          <div className="agency-card">
+            <div className="agency-logo">👨‍💼</div>
+            <div className="agency-name">Management</div>
+            <div className="agency-role">Operations Lead</div>
+            <p className="agency-description">
+              Driving operational excellence and strategic growth through innovative business solutions and data-driven decisions.
+            </p>
+            <span className="agency-badge">Premium Support</span>
+          </div>
+
+          {/* Leadership Card 2 */}
+          <div className="agency-card">
+            <div className="agency-logo">👩‍💼</div>
+            <div className="agency-name">Executive</div>
+            <div className="agency-role">Sales Strategy</div>
+            <p className="agency-description">
+              Empowering teams with cutting-edge sales strategies and customer relationship management excellence.
+            </p>
+            <span className="agency-badge">Client Focused</span>
+          </div>
+
+          {/* Company Card */}
+          <div className="agency-card">
+            <div className="agency-logo">🏢</div>
+            <div className="agency-name">Enterprise</div>
+            <div className="agency-role">Technical Innovation</div>
+            <p className="agency-description">
+              Leveraging advanced technology platforms to deliver seamless, scalable, and secure business solutions.
+            </p>
+            <span className="agency-badge">Industry Leader</span>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
@@ -520,25 +568,25 @@ const HomeView = ({ setCurrentView }) => {
 const SettingsView = ({ onNavigateToSettings }) => {
   return (
     <div className="settings-view">
-      <h2>⚙️ Settings & Configuration</h2>
-      
+      <h2>⚙️ Configuration</h2>
+
       <div className="settings-grid">
         <div className="settings-card">
           <div className="card-icon">🏢</div>
           <h3>Company Settings</h3>
-          <p>Manage company details, bank information, logo, and signature for invoices</p>
-          <button 
+          <p>Manage company details, bank information, logos, and signatures for professional invoices</p>
+          <button
             onClick={onNavigateToSettings}
             className="btn btn-primary full-width"
           >
-            ⚙️ Go to Company Settings
+            ⚙️ Configure
           </button>
         </div>
 
         <div className="settings-card coming-soon">
           <div className="card-icon">👥</div>
           <h3>User Management</h3>
-          <p>Manage user accounts and permissions</p>
+          <p>Manage team accounts, roles, permissions, and access controls</p>
           <button className="btn btn-secondary full-width" disabled>
             🔒 Coming Soon
           </button>
@@ -547,7 +595,7 @@ const SettingsView = ({ onNavigateToSettings }) => {
         <div className="settings-card coming-soon">
           <div className="card-icon">🎨</div>
           <h3>Theme & Appearance</h3>
-          <p>Customize the dashboard theme and colors</p>
+          <p>Customize dashboard theme, colors, and visual preferences</p>
           <button className="btn btn-secondary full-width" disabled>
             🔒 Coming Soon
           </button>
@@ -556,7 +604,7 @@ const SettingsView = ({ onNavigateToSettings }) => {
         <div className="settings-card coming-soon">
           <div className="card-icon">📧</div>
           <h3>Email Configuration</h3>
-          <p>Setup email notifications and invoice delivery</p>
+          <p>Setup automated notifications and professional invoice delivery</p>
           <button className="btn btn-secondary full-width" disabled>
             🔒 Coming Soon
           </button>

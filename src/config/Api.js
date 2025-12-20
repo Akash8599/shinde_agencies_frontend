@@ -4,7 +4,7 @@
 const API_CONFIG = {
   // Backend API base URL
   // Change this based on your environment
-  BACKEND_URL: process.env.REACT_APP_API_URL || 'http://192.168.31.118:8080',
+  BACKEND_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080',
   
   // API endpoints
   ENDPOINTS: {

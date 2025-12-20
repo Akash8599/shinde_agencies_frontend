@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import API_CONFIG from '../config/Api';
 import './ProductManagement.css';
@@ -11,6 +11,10 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // ✅ FIX: Prevent double API calls in Strict Mode
+  const apiCallMade = useRef(false);
+  
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('pm-theme');
     return saved || 'dark';
@@ -51,27 +55,45 @@ const ProductManagement = () => {
   }, [theme]);
 
   // ════════════════════════════════════════════════════════════════════════
-  // ✅ UPDATED: Fetch all products (filters inactive by backend)
+  // ✅ PERFORMANCE: Fetch all products with timing diagnostics
   // ════════════════════════════════════════════════════════════════════════
   const fetchProducts = async () => {
     setLoading(true);
+    
+    const startTime = performance.now();
+    console.log('📦 Products API: Starting fetch...');
+    
     try {
+      const fetchStartTime = performance.now();
       const response = await axiosInstance.get(API_CONFIG.ENDPOINTS.PRODUCTS);
-      // Backend returns only isActive = true products
+      const fetchTime = (performance.now() - fetchStartTime).toFixed(2);
+      
+      console.log(`⏱️  Fetch time: ${fetchTime}ms`);
+      console.log(`📊 Items received: ${response.data?.length || 0}`);
+      
       setProducts(response.data);
       setError('');
+      
+      const totalTime = (performance.now() - startTime).toFixed(2);
+      console.log(`✅ Total time: ${totalTime}ms`);
     } catch (err) {
       setError('Failed to load products');
-      console.error(err);
+      console.error('❌ Error loading products:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load products on component mount
+  // ════════════════════════════════════════════════════════════════════════
+  // ✅ CRITICAL FIX: Load products on component mount (only once)
+  // ════════════════════════════════════════════════════════════════════════
   useEffect(() => {
+    // Prevent double API calls even in Strict Mode
+    if (apiCallMade.current) return;
+    apiCallMade.current = true;
+    
     fetchProducts();
-  }, []);
+  }, []); // Empty dependency array - run once on mount only
 
   // Clear alerts after 4 seconds
   useEffect(() => {
@@ -262,13 +284,31 @@ const ProductManagement = () => {
   // Filter products by search
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    product.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Toggle theme
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ✅ NEW: Render skeleton loading rows
+  // ════════════════════════════════════════════════════════════════════════
+  const SkeletonRow = ({ index }) => (
+    <tr style={{ animation: `skeletonFade 1.5s ease-in-out infinite ${index * 0.1}s` }} className="skeleton-row">
+      <td className="sku"><div className="skeleton skeleton-text"></div></td>
+      <td className="name"><div className="skeleton skeleton-text"></div></td>
+      <td className="price"><div className="skeleton skeleton-text"></div></td>
+      <td className="price"><div className="skeleton skeleton-text"></div></td>
+      <td className="profit"><div className="skeleton skeleton-text"></div></td>
+      <td className="margin"><div className="skeleton skeleton-text"></div></td>
+      <td className="gst"><div className="skeleton skeleton-text"></div></td>
+      <td className="quantity"><div className="skeleton skeleton-text"></div></td>
+      <td className="status"><div className="skeleton skeleton-badge"></div></td>
+      <td className="actions"><div className="skeleton skeleton-actions"></div></td>
+    </tr>
+  );
 
   return (
     <div className="product-management">
@@ -423,7 +463,7 @@ const ProductManagement = () => {
       <div className="search-container">
         <input
           type="text"
-          placeholder="🔍 Search by name or SKU..."
+          placeholder="🔍 Search by product name or description..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -433,7 +473,33 @@ const ProductManagement = () => {
       </div>
 
       {loading ? (
-        <div className="loading">Loading products...</div>
+        // ════════════════════════════════════════════════════════════════════
+        // ✅ NEW: SKELETON LOADING TABLE - SMOOTH & PROFESSIONAL
+        // ════════════════════════════════════════════════════════════════════
+        <div className="products-table-container">
+          <table className="products-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Description</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+                <th>Profit</th>
+                <th>Margin %</th>
+                <th>GST</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Show 8 skeleton rows for loading state */}
+              {[...Array(8)].map((_, index) => (
+                <SkeletonRow key={`skeleton-${index}`} index={index} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : filteredProducts.length === 0 ? (
         <div className="no-products">
           <p>No products found. {products.length === 0 && <a onClick={() => setShowForm(true)}>Add your first product</a>}</p>
@@ -443,8 +509,8 @@ const ProductManagement = () => {
           <table className="products-table">
             <thead>
               <tr>
-                <th>SKU</th>
                 <th>Product Name</th>
+                <th>Description</th>
                 <th>Cost Price</th>
                 <th>Selling Price</th>
                 <th>Profit</th>
@@ -465,8 +531,8 @@ const ProductManagement = () => {
                   <tr key={product.id} className={isLowStock ? 'low-stock-row' : ''} style={{
                     animation: `fadeIn 0.5s ease-out ${index * 0.05}s both`
                   }}>
-                    <td className="sku">{product.sku}</td>
                     <td className="name">{product.name}</td>
+                    <td className="description">{product.description || '—'}</td>
                     <td className="price">₹{product.costPrice.toFixed(2)}</td>
                     <td className="price">₹{product.sellingPrice.toFixed(2)}</td>
                     <td className="profit">₹{profit.toFixed(2)}</td>
@@ -566,7 +632,7 @@ const ProductManagement = () => {
           </div>
         </div>
       )}
-
+{/* 
       <button
         className="theme-toggle"
         onClick={toggleTheme}
@@ -574,7 +640,7 @@ const ProductManagement = () => {
         aria-label="Toggle theme"
       >
         {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      </button> */}
     </div>
   );
 };

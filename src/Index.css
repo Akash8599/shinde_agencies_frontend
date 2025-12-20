@@ -1,0 +1,151 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TAILWIND CSS DIRECTIVES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CUSTOM COMPONENT UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Gradient Text */
+  .gradient-text-primary {
+    @apply bg-gradient-to-r from-white via-gold-primary to-white bg-clip-text text-transparent;
+  }
+
+  .gradient-text-colorful {
+    @apply bg-gradient-to-r from-red-500 via-teal-400 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
+    @apply transition-all duration-400 ease-smooth;
+  }
+
+  .transition-quick {
+    @apply transition-all duration-300 ease-quick;
+  }
+
+  /* Centered Flex */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  /* Premium Glass Effect */
+  .glass-effect {
+    @apply bg-opacity-10 backdrop-blur-xl border border-gold-primary border-opacity-20;
+  }
+
+  /* Premium Card */
+  .premium-card {
+    @apply bg-gradient-to-br from-navy-light to-navy-accent rounded-lg border border-gold-primary border-opacity-20 shadow-lg transition-smooth;
+  }
+
+  /* Premium Button */
+  .btn-premium {
+    @apply px-4 py-2 bg-gradient-to-r from-gold-primary to-gold-light text-navy-dark rounded-lg font-bold text-sm uppercase tracking-wider transition-smooth hover:shadow-lg hover:scale-105;
+  }
+
+  /* Premium Text Shadow */
+  .text-shadow-premium {
+    text-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* 3D Perspective */
+  .perspective-3d {
+    @apply transform-gpu transition-transform duration-400;
+  }
+
+  /* Animated Gradient Background */
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradientShift 6s linear infinite;
+  }
+
+  /* Animated Subtitle */
+  .animate-subtitle {
+    background-size: 200% auto;
+    animation: subtitleGlow 4s linear infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CUSTOM KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes subtitleGlow {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCROLLBAR STYLING
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(212, 175, 55, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37, #9d8c2e);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e8c547, #d4af37);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   GLOBAL STYLES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-navy-dark text-white font-body;
+  overflow: hidden;
+}
+
+/* Selection Color */
+::selection {
+  @apply bg-gold-primary text-navy-dark;
+}
+
+::-moz-selection {
+  @apply bg-gold-primary text-navy-dark;
+}

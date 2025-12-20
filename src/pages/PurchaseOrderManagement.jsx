@@ -6,15 +6,14 @@ import './PurchaseOrderManagement.css';
 function PurchaseOrderManagement() {
   const [currentView, setCurrentView] = useState('list');
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [filteredPOs, setFilteredPOs] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedPO, setSelectedPO] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // ════════════════════════════════════════════════════════════════════════
-  // ✅ NEW: State for creating new product while creating PO
-  // ════════════════════════════════════════════════════════════════════════
   const [showNewProductModal, setShowNewProductModal] = useState(false);
   const [newProductData, setNewProductData] = useState({
     sku: '',
@@ -28,6 +27,8 @@ function PurchaseOrderManagement() {
   });
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [showProductSearch, setShowProductSearch] = useState(null);
 
   const [newPO, setNewPO] = useState({
     supplierName: '',
@@ -38,6 +39,11 @@ function PurchaseOrderManagement() {
     fetchPurchaseOrders();
     fetchProducts();
   }, []);
+
+  // Filter POs when search term changes
+  useEffect(() => {
+    filterPOs();
+  }, [searchTerm, purchaseOrders]);
 
   const fetchPurchaseOrders = async () => {
     try {
@@ -63,9 +69,29 @@ function PurchaseOrderManagement() {
     }
   };
 
-  // ════════════════════════════════════════════════════════════════════════
-  // ✅ NEW: Create product inline
-  // ════════════════════════════════════════════════════════════════════════
+  // Filter POs by search term
+  const filterPOs = () => {
+    if (!searchTerm.trim()) {
+      setFilteredPOs(purchaseOrders);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase();
+    const filtered = purchaseOrders.filter(po => {
+      const poNum = (po.poNumber || '').toLowerCase();
+      const supplier = (po.supplierName || '').toLowerCase();
+      const status = (po.status || '').toLowerCase();
+
+      return (
+        poNum.includes(term) ||
+        supplier.includes(term) ||
+        status.includes(term)
+      );
+    });
+
+    setFilteredPOs(filtered);
+  };
+
   const handleCreateProduct = async () => {
     try {
       if (!newProductData.sku || !newProductData.name) {
@@ -90,7 +116,6 @@ function PurchaseOrderManagement() {
 
       setSuccess(`✓ Product "${response.data.name}" created successfully!`);
 
-      // Add the new product to the item
       if (selectedItemIndex !== null) {
         const updatedItems = [...newPO.items];
         updatedItems[selectedItemIndex].productId = response.data.id;
@@ -98,10 +123,8 @@ function PurchaseOrderManagement() {
         setNewPO({ ...newPO, items: updatedItems });
       }
 
-      // Refresh products list
       fetchProducts();
 
-      // Reset form and close modal
       setNewProductData({
         sku: '',
         name: '',
@@ -231,6 +254,19 @@ function PurchaseOrderManagement() {
     return items.reduce((total, item) => total + (item.quantity * item.costPrice), 0).toFixed(2);
   };
 
+  // Get filtered products based on search term
+  const getFilteredProducts = () => {
+    if (!productSearchTerm.trim()) {
+      return products;
+    }
+    
+    const term = productSearchTerm.toLowerCase();
+    return products.filter(product => 
+      product.name.toLowerCase().includes(term) ||
+      product.sku.toLowerCase().includes(term)
+    );
+  };
+
   const getProductName = (productId) => {
     const product = products.find(p => p.id === productId);
     return product ? product.name : 'Unknown';
@@ -238,10 +274,10 @@ function PurchaseOrderManagement() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'ORDERED': return '#FF6B6B';
-      case 'RECEIVED': return '#51CF66';
-      case 'CANCELLED': return '#868E96';
-      default: return '#495057';
+      case 'ORDERED': return 'rgba(212, 175, 55, 0.8)';
+      case 'RECEIVED': return 'rgba(16, 185, 129, 0.8)';
+      case 'CANCELLED': return 'rgba(168, 178, 193, 0.8)';
+      default: return 'rgba(212, 175, 55, 0.8)';
     }
   };
 
@@ -267,26 +303,53 @@ function PurchaseOrderManagement() {
               </button>
             </div>
 
+            {/* Search Section */}
+            {purchaseOrders.length > 0 && (
+              <div className="po-search-section">
+                <div className="po-search-container">
+                  <span className="po-search-icon">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search by PO number, supplier name, or status..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="po-search-input"
+                  />
+                  {searchTerm && (
+                    <button
+                      className="po-search-clear-btn"
+                      onClick={() => setSearchTerm('')}
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {loading ? (
               <div className="loading-spinner">
                 <div className="spinner"></div>
                 <p>Loading purchase orders...</p>
               </div>
-            ) : purchaseOrders.length === 0 ? (
+            ) : filteredPOs.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">📭</div>
-                <h3>No purchase orders yet</h3>
-                <p>Create your first purchase order to get started</p>
-                <button 
-                  className="btn-create-po"
-                  onClick={() => setCurrentView('create')}
-                >
-                  Create First PO
-                </button>
+                <h3>{purchaseOrders.length === 0 ? 'No purchase orders yet' : 'No Results Found'}</h3>
+                <p>{purchaseOrders.length === 0 ? 'Create your first purchase order to get started' : `No POs match "${searchTerm}"`}</p>
+                {purchaseOrders.length === 0 && (
+                  <button 
+                    className="btn-create-po"
+                    onClick={() => setCurrentView('create')}
+                  >
+                    Create First PO
+                  </button>
+                )}
               </div>
             ) : (
               <div className="po-grid">
-                {purchaseOrders.map((po) => (
+                {filteredPOs.map((po) => (
                   <div key={po.id} className="po-card">
                     <div className="po-card-header">
                       <div>
@@ -367,19 +430,19 @@ function PurchaseOrderManagement() {
               ← Back
             </button>
 
-            <div className="create-form-container">
-              <div className="create-form-header">
+            <div className="po-form-container">
+              <div className="po-form-header">
                 <h2>Create Purchase Order</h2>
                 <p>Add a new purchase order with products from inventory or create new products</p>
               </div>
 
-              <div className="form-section">
+              <div className="po-form-section">
                 <h3 className="section-title">Supplier Details</h3>
-                <div className="form-group">
-                  <label className="form-label">Supplier Name *</label>
+                <div className="po-supplier-form-group">
+                  <label className="po-form-label">Supplier Name *</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className="po-supplier-input"
                     value={newPO.supplierName}
                     onChange={(e) => setNewPO({ ...newPO, supplierName: e.target.value })}
                     placeholder="Enter supplier name"
@@ -387,7 +450,7 @@ function PurchaseOrderManagement() {
                 </div>
               </div>
 
-              <div className="form-section">
+              <div className="po-form-section">
                 <div className="section-header">
                   <h3 className="section-title">Order Items</h3>
                   <button 
@@ -398,27 +461,65 @@ function PurchaseOrderManagement() {
                   </button>
                 </div>
 
-                <div className="items-container">
+                <div className="po-items-container">
                   {newPO.items.map((item, index) => (
-                    <div key={index} className="item-card">
-                      <div className="item-number">Item {index + 1}</div>
+                    <div key={index} className="po-item-card">
+                      <div className="po-item-number">Item {index + 1}</div>
                       
-                      <div className="item-fields">
-                        <div className="field-group">
-                          <label className="form-label">Product *</label>
-                          <div className="product-selector">
-                            <select
-                              className="form-input product-select"
-                              value={item.productId}
-                              onChange={(e) => handleUpdateItem(index, 'productId', e.target.value)}
-                            >
-                              <option value="">Select existing product...</option>
-                              {products.map((product) => (
-                                <option key={product.id} value={product.id}>
-                                  {product.name} (SKU: {product.sku})
-                                </option>
-                              ))}
-                            </select>
+                      <div className="po-item-fields">
+                        <div className="po-field-group">
+                          <label className="po-form-label">Product *</label>
+                          <div className="po-product-selector">
+                            {showProductSearch === index ? (
+                              <div className="po-product-search-dropdown">
+                                <input
+                                  type="text"
+                                  className="po-product-search-input"
+                                  placeholder="Search product name or SKU..."
+                                  value={productSearchTerm}
+                                  onChange={(e) => setProductSearchTerm(e.target.value)}
+                                  autoFocus
+                                />
+                                <div className="po-product-list">
+                                  {getFilteredProducts().length > 0 ? (
+                                    getFilteredProducts().map((product) => (
+                                      <button
+                                        key={product.id}
+                                        className="po-product-item"
+                                        onClick={() => {
+                                          handleUpdateItem(index, 'productId', product.id.toString());
+                                          setShowProductSearch(null);
+                                          setProductSearchTerm('');
+                                        }}
+                                      >
+                                        <div className="po-product-item-name">{product.name}</div>
+                                        <div className="po-product-item-sku">SKU: {product.sku}</div>
+                                      </button>
+                                    ))
+                                  ) : (
+                                    <div className="po-product-empty">No products found</div>
+                                  )}
+                                </div>
+                                <button
+                                  className="po-product-search-close"
+                                  onClick={() => {
+                                    setShowProductSearch(null);
+                                    setProductSearchTerm('');
+                                  }}
+                                >
+                                  ✕ Close
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  className="po-product-select-btn"
+                                  onClick={() => setShowProductSearch(index)}
+                                >
+                                  {item.productName || 'Select Product...'}
+                                </button>
+                              </>
+                            )}
                             <button 
                               className="btn-create-product"
                               onClick={() => {
@@ -427,16 +528,16 @@ function PurchaseOrderManagement() {
                               }}
                               title="Create new product"
                             >
-                              + New Product
+                              + New
                             </button>
                           </div>
                         </div>
 
-                        <div className="field-group">
-                          <label className="form-label">Quantity *</label>
+                        <div className="po-field-group">
+                          <label className="po-form-label">Quantity *</label>
                           <input
                             type="number"
-                            className="form-input"
+                            className="po-form-input"
                             min="1"
                             value={item.quantity || ''}
                             onChange={(e) => handleUpdateItem(index, 'quantity', e.target.value)}
@@ -444,11 +545,11 @@ function PurchaseOrderManagement() {
                           />
                         </div>
 
-                        <div className="field-group">
-                          <label className="form-label">Cost Price (per unit) *</label>
+                        <div className="po-field-group">
+                          <label className="po-form-label">Cost Price (per unit) *</label>
                           <input
                             type="number"
-                            className="form-input"
+                            className="po-form-input"
                             min="0"
                             step="0.01"
                             value={item.costPrice || ''}
@@ -457,9 +558,9 @@ function PurchaseOrderManagement() {
                           />
                         </div>
 
-                        <div className="field-group">
-                          <label className="form-label">Item Total</label>
-                          <div className="item-total">
+                        <div className="po-field-group">
+                          <label className="po-form-label">Item Total</label>
+                          <div className="po-item-total">
                             ₹{calculateItemTotal(item.quantity, item.costPrice)}
                           </div>
                         </div>
@@ -479,30 +580,30 @@ function PurchaseOrderManagement() {
                 </div>
               </div>
 
-              <div className="form-summary">
-                <div className="summary-card">
-                  <div className="summary-item">
-                    <span className="summary-label">Total Items</span>
-                    <span className="summary-value">{newPO.items.length}</span>
+              <div className="po-form-summary">
+                <div className="po-summary-card">
+                  <div className="po-summary-item">
+                    <span className="po-summary-label">Total Items</span>
+                    <span className="po-summary-value">{newPO.items.length}</span>
                   </div>
-                  <div className="summary-divider"></div>
-                  <div className="summary-item">
-                    <span className="summary-label">Grand Total</span>
-                    <span className="summary-value total">₹{calculatePOTotal(newPO.items)}</span>
+                  <div className="po-summary-divider"></div>
+                  <div className="po-summary-item">
+                    <span className="po-summary-label">Grand Total</span>
+                    <span className="po-summary-value total">₹{calculatePOTotal(newPO.items)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="form-actions">
+              <div className="po-form-actions">
                 <button 
-                  className="btn-create-final"
+                  className="btn-po-create-final"
                   onClick={handleCreatePO}
                   disabled={loading}
                 >
                   {loading ? 'Creating...' : 'Create Purchase Order'}
                 </button>
                 <button 
-                  className="btn-cancel"
+                  className="btn-po-cancel"
                   onClick={() => {
                     setCurrentView('list');
                     setNewPO({
@@ -547,8 +648,8 @@ function PurchaseOrderManagement() {
 
               <div className="po-detail-items">
                 <h3>Order Items</h3>
-                <div className="items-table-wrapper">
-                  <table className="items-table">
+                <div className="po-items-table-wrapper">
+                  <table className="po-items-table">
                     <thead>
                       <tr>
                         <th>Product</th>
@@ -560,7 +661,7 @@ function PurchaseOrderManagement() {
                     <tbody>
                       {selectedPO.items && selectedPO.items.map((item, index) => (
                         <tr key={index}>
-                          <td className="product-cell">{getProductName(item.product?.id)}</td>
+                          <td className="product-cell">{getProductName(item.productId)}</td>
                           <td className="number-cell">{item.quantity}</td>
                           <td className="number-cell">₹{item.costPrice.toFixed(2)}</td>
                           <td className="number-cell total-cell">₹{(item.quantity * item.costPrice).toFixed(2)}</td>
@@ -572,20 +673,20 @@ function PurchaseOrderManagement() {
               </div>
 
               <div className="po-detail-total">
-                <span className="total-label">Grand Total</span>
-                <span className="total-amount">₹{selectedPO.totalAmount.toFixed(2)}</span>
+                <span className="po-total-label">Grand Total</span>
+                <span className="po-total-amount">₹{selectedPO.totalAmount.toFixed(2)}</span>
               </div>
 
               {selectedPO.status === 'ORDERED' && (
                 <div className="po-detail-actions">
                   <button 
-                    className="btn-receive"
+                    className="btn-po-receive"
                     onClick={() => handleReceivePO(selectedPO.id)}
                   >
                     ✓ Mark as Received
                   </button>
                   <button 
-                    className="btn-cancel-po"
+                    className="btn-po-cancel-order"
                     onClick={() => handleCancelPO(selectedPO.id)}
                   >
                     ✕ Cancel Order
@@ -596,16 +697,13 @@ function PurchaseOrderManagement() {
           </div>
         )}
 
-        {/* ════════════════════════════════════════════════════════════════
-            ✅ NEW: Product Creation Modal
-            ════════════════════════════════════════════════════════════════ */}
         {showNewProductModal && (
-          <div className="modal-overlay">
-            <div className="product-modal">
-              <div className="modal-header">
+          <div className="po-modal-overlay">
+            <div className="po-product-modal">
+              <div className="po-modal-header">
                 <h3>Create New Product</h3>
                 <button 
-                  className="modal-close"
+                  className="po-modal-close"
                   onClick={() => {
                     setShowNewProductModal(false);
                     setSelectedItemIndex(null);
@@ -625,24 +723,24 @@ function PurchaseOrderManagement() {
                 </button>
               </div>
 
-              <div className="modal-body">
-                <div className="modal-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">SKU *</label>
+              <div className="po-modal-body">
+                <div className="po-modal-form">
+                  <div className="po-form-row">
+                    <div className="po-form-group">
+                      <label className="po-form-label">SKU *</label>
                       <input
                         type="text"
-                        className="form-input"
+                        className="po-form-input"
                         value={newProductData.sku}
                         onChange={(e) => setNewProductData({ ...newProductData, sku: e.target.value })}
                         placeholder="e.g., PROD001"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Product Name *</label>
+                    <div className="po-form-group">
+                      <label className="po-form-label">Product Name *</label>
                       <input
                         type="text"
-                        className="form-input"
+                        className="po-form-input"
                         value={newProductData.name}
                         onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
                         placeholder="e.g., Laptop"
@@ -650,10 +748,10 @@ function PurchaseOrderManagement() {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Description</label>
+                  <div className="po-form-group">
+                    <label className="po-form-label">Description</label>
                     <textarea
-                      className="form-input"
+                      className="po-form-input"
                       value={newProductData.description}
                       onChange={(e) => setNewProductData({ ...newProductData, description: e.target.value })}
                       placeholder="Product description"
@@ -661,12 +759,12 @@ function PurchaseOrderManagement() {
                     ></textarea>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Cost Price (₹) *</label>
+                  <div className="po-form-row">
+                    <div className="po-form-group">
+                      <label className="po-form-label">Cost Price (₹) *</label>
                       <input
                         type="number"
-                        className="form-input"
+                        className="po-form-input"
                         min="0"
                         step="0.01"
                         value={newProductData.costPrice}
@@ -674,11 +772,11 @@ function PurchaseOrderManagement() {
                         placeholder="0.00"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Selling Price (₹) *</label>
+                    <div className="po-form-group">
+                      <label className="po-form-label">Selling Price (₹) *</label>
                       <input
                         type="number"
-                        className="form-input"
+                        className="po-form-input"
                         min="0"
                         step="0.01"
                         value={newProductData.sellingPrice}
@@ -688,11 +786,11 @@ function PurchaseOrderManagement() {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">GST Rate (%)</label>
+                  <div className="po-form-row">
+                    <div className="po-form-group">
+                      <label className="po-form-label">GST Rate (%)</label>
                       <select
-                        className="form-input"
+                        className="po-form-input"
                         value={newProductData.gstRate}
                         onChange={(e) => setNewProductData({ ...newProductData, gstRate: e.target.value })}
                       >
@@ -702,11 +800,11 @@ function PurchaseOrderManagement() {
                         <option value="28">28%</option>
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Initial Quantity</label>
+                    <div className="po-form-group">
+                      <label className="po-form-label">Initial Quantity</label>
                       <input
                         type="number"
-                        className="form-input"
+                        className="po-form-input"
                         min="0"
                         value={newProductData.quantity}
                         onChange={(e) => setNewProductData({ ...newProductData, quantity: e.target.value })}
@@ -715,11 +813,11 @@ function PurchaseOrderManagement() {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Low Stock Alert</label>
+                  <div className="po-form-group">
+                    <label className="po-form-label">Low Stock Alert</label>
                     <input
                       type="number"
-                      className="form-input"
+                      className="po-form-input"
                       min="0"
                       value={newProductData.lowStockAlert}
                       onChange={(e) => setNewProductData({ ...newProductData, lowStockAlert: e.target.value })}
@@ -729,9 +827,9 @@ function PurchaseOrderManagement() {
                 </div>
               </div>
 
-              <div className="modal-footer">
+              <div className="po-modal-footer">
                 <button 
-                  className="btn-cancel-modal"
+                  className="btn-po-cancel-modal"
                   onClick={() => {
                     setShowNewProductModal(false);
                     setSelectedItemIndex(null);
@@ -750,7 +848,7 @@ function PurchaseOrderManagement() {
                   Cancel
                 </button>
                 <button 
-                  className="btn-create-product-final"
+                  className="btn-po-create-product-final"
                   onClick={handleCreateProduct}
                   disabled={creatingProduct}
                 >

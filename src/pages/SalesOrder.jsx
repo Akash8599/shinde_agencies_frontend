@@ -14,12 +14,10 @@ const SalesOrder = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrderId, setInvoiceOrderId] = useState(null);
 
-  // Fetch all sales orders
   useEffect(() => {
     fetchSalesOrders();
   }, []);
 
-  // Filter orders when search term changes
   useEffect(() => {
     filterOrders();
   }, [searchTerm, salesOrders]);
@@ -30,7 +28,6 @@ const SalesOrder = () => {
       const response = await axiosInstance.get('/api/sales-orders');
       console.log('✅ Sales orders fetched:', response.data);
 
-      // Sort by latest first (by ID or date)
       const sorted = Array.isArray(response.data)
         ? response.data.sort((a, b) => (b.id || 0) - (a.id || 0))
         : [];
@@ -46,7 +43,6 @@ const SalesOrder = () => {
     }
   };
 
-  // Filter orders by search term
   const filterOrders = () => {
     if (!searchTerm.trim()) {
       setFilteredOrders(salesOrders);
@@ -71,23 +67,19 @@ const SalesOrder = () => {
     setFilteredOrders(filtered);
   };
 
-  // Handle view order details
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
   };
 
-  // Handle print invoice
   const handlePrintInvoice = (orderId) => {
     setInvoiceOrderId(orderId);
     setShowInvoice(true);
   };
 
-  // Close details modal
   const closeDetailsModal = () => {
     setSelectedOrder(null);
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
@@ -103,7 +95,6 @@ const SalesOrder = () => {
     }
   };
 
-  // Calculate order total
   const calculateOrderTotal = (items = []) => {
     let subtotal = 0;
     let tax = 0;
@@ -146,7 +137,7 @@ const SalesOrder = () => {
             <div>
               <p className="stat-label">Total Revenue</p>
               <p className="stat-value">
-                ₹{salesOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0).toFixed(0)}
+                ₹{salesOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0).toFixed(2)}
               </p>
             </div>
           </div>
@@ -237,7 +228,7 @@ const SalesOrder = () => {
                   )}
                 </div>
 
-                {/* Order Details - Improved */}
+                {/* Order Details */}
                 <div className="order-details">
                   <div className="detail-item detail-items-expandable">
                     <span className="detail-label">Items</span>
@@ -339,7 +330,7 @@ const SalesOrder = () => {
                 </div>
               </div>
 
-              {/* Items Section - Now showing Product Name */}
+              {/* Items Section */}
               <div className="modal-section">
                 <h3>Order Items</h3>
                 <div className="items-list">
@@ -347,10 +338,10 @@ const SalesOrder = () => {
                     <div key={idx} className="item-row">
                       <div className="item-details">
                         <p className="item-name">{item.productName || `Product ${item.productId}`}</p>
-                        <p className="item-desc">Qty: {item.quantity} × ₹{(item.sellingPrice || 0).toFixed(0)}</p>
+                        <p className="item-desc">Qty: {item.quantity} × ₹{(item.sellingPrice || 0).toFixed(2)}</p>
                       </div>
                       <div className="item-total">
-                        ₹{((item.quantity || 0) * (item.sellingPrice || 0)).toFixed(0)}
+                        ₹{((item.quantity || 0) * (item.sellingPrice || 0)).toFixed(2)}
                       </div>
                     </div>
                   ))}
@@ -362,15 +353,15 @@ const SalesOrder = () => {
                 <div className="summary-box">
                   <div className="summary-row">
                     <span>Subtotal</span>
-                    <span>₹{calculateOrderTotal(selectedOrder.items).subtotal.toFixed(0)}</span>
+                    <span>₹{calculateOrderTotal(selectedOrder.items).subtotal.toFixed(2)}</span>
                   </div>
                   <div className="summary-row">
                     <span>Tax (GST)</span>
-                    <span>₹{calculateOrderTotal(selectedOrder.items).tax.toFixed(0)}</span>
+                    <span>₹{calculateOrderTotal(selectedOrder.items).tax.toFixed(2)}</span>
                   </div>
                   <div className="summary-row total">
                     <span>Total Amount</span>
-                    <span>₹{calculateOrderTotal(selectedOrder.items).total.toFixed(0)}</span>
+                    <span>₹{calculateOrderTotal(selectedOrder.items).total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
