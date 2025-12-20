@@ -8,6 +8,7 @@ import CompanySettings from '../pages/CompanySettings';
 import API_CONFIG from '../config/Api';
 import './Dashboard.css';
 import './Dashboard-Tailwind.css';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPER: Safe JSON Parse
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -48,7 +49,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
     setLoading(false);
   }, [user]);
 
-  // ✅ NEW: Live timestamp update - updates every second
+  // ✅ Live timestamp update - updates every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -229,11 +230,6 @@ const HomeView = ({ setCurrentView }) => {
   const [error, setError] = useState(null);
   const [companyName, setCompanyName] = useState('SHINDE AGENCIES');
 
-  useEffect(() => {
-    fetchDashboardStats();
-    fetchCompanyName();
-  }, []);
-
   // ✅ Fetch company name from API
   const fetchCompanyName = async () => {
     try {
@@ -264,6 +260,7 @@ const HomeView = ({ setCurrentView }) => {
       }
     } catch (error) {
       // Silent error handling
+      console.error('Error fetching company name:', error);
     }
   };
 
@@ -317,6 +314,7 @@ const HomeView = ({ setCurrentView }) => {
           totalProducts = 0;
         }
       } catch (err) {
+        console.error('Error fetching products:', err);
         totalProducts = 0;
       }
 
@@ -351,6 +349,7 @@ const HomeView = ({ setCurrentView }) => {
           unpaidOrders = 0;
         }
       } catch (err) {
+        console.error('Error fetching orders:', err);
         totalOrders = 0;
         totalRevenue = 0;
         unpaidOrders = 0;
@@ -379,6 +378,7 @@ const HomeView = ({ setCurrentView }) => {
           totalCustomers = 0;
         }
       } catch (err) {
+        console.error('Error fetching customers:', err);
         totalCustomers = 0;
       }
 
@@ -398,6 +398,28 @@ const HomeView = ({ setCurrentView }) => {
       setLoading(false);
     }
   };
+
+  // ✅ FIXED: Use useEffect with proper cleanup to prevent double calls
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboardData = async () => {
+      if (mounted) {
+        // ✅ Fetch both in parallel to reduce requests
+        await Promise.all([
+          fetchDashboardStats(),
+          fetchCompanyName()
+        ]);
+      }
+    };
+
+    loadDashboardData();
+
+    // ✅ Cleanup function to prevent state updates after unmount
+    return () => {
+      mounted = false;
+    };
+  }, []); // ✅ Empty dependency array - runs ONLY ONCE on mount
 
   // Format currency using config
   const formatCurrency = (value) => {

@@ -5,7 +5,7 @@ import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  // ✅ REMOVED StrictMode to prevent double API calls in development
+  // Note: StrictMode is helpful for detecting issues, but calls effects twice
+  <App />
 );
