@@ -4,8 +4,8 @@
 const API_CONFIG = {
   // Backend API base URL
   // Change this based on your environment
-  BACKEND_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080',
-  
+  BACKEND_URL: process.env.REACT_APP_API_URL || 'https://shinde-agencies-epq5.onrender.com',
+
   // API endpoints
   ENDPOINTS: {
     // ============================================
@@ -14,7 +14,7 @@ const API_CONFIG = {
     LOGIN: '/api/auth/login',
     REGISTER: '/api/auth/register',
     LOGOUT: '/api/auth/logout',
-    
+
     // ============================================
     // PRODUCT ENDPOINTS
     // ============================================
@@ -23,7 +23,7 @@ const API_CONFIG = {
     CREATE_PRODUCT: '/api/products',
     UPDATE_PRODUCT: (id) => `/api/products/${id}`,
     DELETE_PRODUCT: (id) => `/api/products/${id}`,
-    
+
     // ============================================
     // PURCHASE ORDER ENDPOINTS (from Suppliers)
     // ============================================
@@ -34,7 +34,7 @@ const API_CONFIG = {
     DELETE_PURCHASE_ORDER: (id) => `/api/purchase-orders/${id}`,
     RECEIVE_PURCHASE_ORDER: (id) => `/api/purchase-orders/${id}/receive`,
     CANCEL_PURCHASE_ORDER: (id) => `/api/purchase-orders/${id}/cancel`,
-    
+
     // ============================================
     // CUSTOMER ENDPOINTS (NEW)
     // ============================================
@@ -43,7 +43,7 @@ const API_CONFIG = {
     CREATE_CUSTOMER: '/api/customers',
     UPDATE_CUSTOMER: (id) => `/api/customers/${id}`,
     DELETE_CUSTOMER: (id) => `/api/customers/${id}`,
-    
+
     // ============================================
     // SALES ORDER ENDPOINTS (NEW)
     // For customer orders with GST billing
@@ -53,12 +53,12 @@ const API_CONFIG = {
     CREATE_SALES_ORDER: '/api/sales-orders',
     UPDATE_SALES_ORDER: (id) => `/api/sales-orders/${id}`,
     DELETE_SALES_ORDER: (id) => `/api/sales-orders/${id}`,
-    
+
     // Sales Order Actions
     GENERATE_SALES_ORDER_INVOICE: (id) => `/api/sales-orders/${id}/invoice`,
     MARK_SALES_ORDER_PAID: (id) => `/api/sales-orders/${id}/mark-paid`,
     CANCEL_SALES_ORDER: (id) => `/api/sales-orders/${id}/cancel`,
-    
+
     // ============================================
     // INVOICE ENDPOINTS (FUTURE)
     // ============================================
@@ -67,14 +67,14 @@ const API_CONFIG = {
     CREATE_INVOICE: '/api/invoices',
     GENERATE_INVOICE_PDF: (id) => `/api/invoices/${id}/generate-pdf`,
     SEND_INVOICE_EMAIL: (id) => `/api/invoices/${id}/send-email`,
-    
+
     // ============================================
     // PAYMENT ENDPOINTS (FUTURE)
     // ============================================
     PAYMENTS: '/api/payments',
     CREATE_PAYMENT: '/api/payments',
     GET_PAYMENT_BY_ID: (id) => `/api/payments/${id}`,
-    
+
     // ============================================
     // REPORT ENDPOINTS (FUTURE)
     // ============================================
@@ -83,20 +83,20 @@ const API_CONFIG = {
     INVENTORY_REPORT: '/api/reports/inventory',
     CUSTOMER_REPORT: '/api/reports/customers',
   },
-  
+
   // ============================================
   // CONFIGURATION OPTIONS
   // ============================================
-  
+
   // Timeout for API calls (in ms)
   TIMEOUT: 30000,
-  
+
   // Retry configuration
   RETRY: {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000, // 1 second
   },
-  
+
   // ============================================
   // FEATURE FLAGS (Enable/Disable features)
   // ============================================
@@ -109,7 +109,7 @@ const API_CONFIG = {
     PAYMENTS: false, // Coming soon
     REPORTS: false, // Coming soon
   },
-  
+
   // ============================================
   // DEFAULT VALUES
   // ============================================
@@ -119,7 +119,7 @@ const API_CONFIG = {
     CURRENCY: 'INR',
     CURRENCY_SYMBOL: '₹',
   },
-  
+
   // ============================================
   // ERROR MESSAGES
   // ============================================
