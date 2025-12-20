@@ -20,7 +20,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('authToken');
-    
+
     // Add token to Authorization header if it exists
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -28,14 +28,14 @@ axiosInstance.interceptors.request.use(
     } else {
       console.warn('⚠️ No token found in localStorage');
     }
-    
+
     // Log the request
     console.log('📡 API Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
     });
-    
+
     return config;
   },
   (error) => {
@@ -58,61 +58,93 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     // Handle different error types
-    
-    // 401 - Unauthorized (token expired or invalid)
-    if (error.response?.status === 401) {
-      console.error('❌ 401 Unauthorized - Token invalid or expired');
-      
-      // Clear stored token and user data
+
+    const status = error.response?.status;
+    // Handle both object with message and raw string responses
+    const resData = error.response?.data;
+    const errorMessage = (typeof resData === 'string' ? resData : resData?.message) || error.message || 'Unknown error';
+
+    // DEBUG: Log 403 errors to help identify the exact message
+    if (status === 403) {
+      console.warn('⚠️ 403 Error Detected. Message:', errorMessage);
+    }
+
+    const lowerMsg = errorMessage.toLowerCase();
+
+    // ✅ HANDLE SILENT 403s (Backend sends 403 with no message for expired tokens)
+    const isSilent403 = status === 403 && (
+      !resData ||
+      (typeof resData === 'object' && Object.keys(resData).length === 0) ||
+      errorMessage === 'Unknown error' ||
+      lowerMsg.includes('request failed with status code 403')
+    );
+
+    // Check for Token Expiration (401 OR specific 403 messages)
+    const isTokenExpired =
+      status === 401 ||
+      (status === 403 && (
+        lowerMsg.includes('token') ||
+        lowerMsg.includes('expired') ||
+        lowerMsg.includes('signature') ||
+        lowerMsg.includes('malformed') ||
+        lowerMsg.includes('jwt') ||
+        lowerMsg.includes('invalid') ||
+        lowerMsg.includes('access denied') ||
+        lowerMsg.includes('unauthorized')
+      )) ||
+      isSilent403;
+
+    if (isTokenExpired) {
+      console.error('❌ Session Expired (Silent 403 or Explicit) - Redirecting to Login');
+
+      // Clear ALL auth data
       localStorage.removeItem('authToken');
-      localStorage.removeItem('userInfo');
-      
-      // Redirect to login
+      localStorage.removeItem('username');
+      localStorage.removeItem('userRole');
+
+      // Force redirect to login
       window.location.href = '/login';
       return Promise.reject(new Error('Session expired. Please login again.'));
     }
-    
-    // 403 - Forbidden (user doesn't have permission)
-    if (error.response?.status === 403) {
+
+    // 403 - Forbidden (Permission issue, not Auth issue)
+    if (status === 403) {
       console.error('❌ 403 Forbidden - User lacks permissions');
-      const message = error.response?.data?.message || 'You do not have permission to perform this action.';
-      return Promise.reject(new Error(message));
+      return Promise.reject(new Error(errorMessage));
     }
-    
+
     // 404 - Not Found
-    if (error.response?.status === 404) {
+    if (status === 404) {
       console.error('❌ 404 Not Found');
       return Promise.reject(new Error('Resource not found.'));
     }
-    
+
     // 400 - Bad Request
-    if (error.response?.status === 400) {
+    if (status === 400) {
       console.error('❌ 400 Bad Request');
-      const message = error.response?.data?.message || 'Invalid request data.';
-      return Promise.reject(new Error(message));
+      return Promise.reject(new Error(errorMessage));
     }
-    
-    // 409 - Conflict (e.g., duplicate SKU)
-    if (error.response?.status === 409) {
+
+    // 409 - Conflict
+    if (status === 409) {
       console.error('❌ 409 Conflict');
-      const message = error.response?.data?.message || 'This resource already exists.';
-      return Promise.reject(new Error(message));
+      return Promise.reject(new Error(errorMessage));
     }
-    
+
     // 500+ - Server Error
-    if (error.response?.status >= 500) {
-      console.error('❌ Server Error:', error.response.status);
+    if (status >= 500) {
+      console.error('❌ Server Error:', status);
       return Promise.reject(new Error('Server error. Please try again later.'));
     }
-    
-    // Network error (no response from server)
+
+    // Network error
     if (!error.response) {
       console.error('❌ Network Error:', error.message);
       return Promise.reject(new Error(`Network error. Cannot connect to ${API_CONFIG.BACKEND_URL}`));
     }
-    
+
     // Generic error
-    console.error('❌ API Error:', error.response?.data || error.message);
+    console.error('❌ API Error:', errorMessage);
     return Promise.reject(error);
   }
 );

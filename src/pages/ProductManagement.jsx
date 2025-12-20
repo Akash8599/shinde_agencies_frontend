@@ -11,15 +11,15 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // ✅ FIX: Prevent double API calls in Strict Mode
   const apiCallMade = useRef(false);
-  
+
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('pm-theme');
     return saved || 'dark';
   });
-  
+
   // ════════════════════════════════════════════════════════════════════════
   // ✅ NEW: Delete Modal with smart messages for used products
   // ════════════════════════════════════════════════════════════════════════
@@ -59,21 +59,21 @@ const ProductManagement = () => {
   // ════════════════════════════════════════════════════════════════════════
   const fetchProducts = async () => {
     setLoading(true);
-    
+
     const startTime = performance.now();
     console.log('📦 Products API: Starting fetch...');
-    
+
     try {
       const fetchStartTime = performance.now();
       const response = await axiosInstance.get(API_CONFIG.ENDPOINTS.PRODUCTS);
       const fetchTime = (performance.now() - fetchStartTime).toFixed(2);
-      
+
       console.log(`⏱️  Fetch time: ${fetchTime}ms`);
       console.log(`📊 Items received: ${response.data?.length || 0}`);
-      
+
       setProducts(response.data);
       setError('');
-      
+
       const totalTime = (performance.now() - startTime).toFixed(2);
       console.log(`✅ Total time: ${totalTime}ms`);
     } catch (err) {
@@ -91,7 +91,7 @@ const ProductManagement = () => {
     // Prevent double API calls even in Strict Mode
     if (apiCallMade.current) return;
     apiCallMade.current = true;
-    
+
     fetchProducts();
   }, []); // Empty dependency array - run once on mount only
 
@@ -229,17 +229,17 @@ const ProductManagement = () => {
   // ════════════════════════════════════════════════════════════════════════
   const confirmDelete = async () => {
     const { productId, productName } = deleteModal;
-    
+
     setDeleteModal(prev => ({ ...prev, isDeleting: true }));
-    
+
     try {
       await axiosInstance.delete(API_CONFIG.ENDPOINTS.DELETE_PRODUCT(productId));
-      
+
       setSuccess(`✓ "${productName}" deleted successfully!`);
       fetchProducts();
-      setDeleteModal({ 
-        isOpen: false, 
-        productId: null, 
+      setDeleteModal({
+        isOpen: false,
+        productId: null,
         productName: '',
         isUsedInOrders: false,
         usageCount: 0,
@@ -247,15 +247,15 @@ const ProductManagement = () => {
       });
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to delete product';
-      
+
       // ✅ NEW: Handle smart delete error messages
       if (errorMessage.includes('used in') || errorMessage.includes('sales order')) {
         // Product is used in orders - it was soft deleted
         setSuccess(`✓ Product marked as inactive (hidden from new orders). Historical data preserved.`);
         fetchProducts();
-        setDeleteModal({ 
-          isOpen: false, 
-          productId: null, 
+        setDeleteModal({
+          isOpen: false,
+          productId: null,
           productName: '',
           isUsedInOrders: false,
           usageCount: 0,
@@ -271,9 +271,9 @@ const ProductManagement = () => {
 
   // Cancel delete
   const cancelDelete = () => {
-    setDeleteModal({ 
-      isOpen: false, 
-      productId: null, 
+    setDeleteModal({
+      isOpen: false,
+      productId: null,
       productName: '',
       isUsedInOrders: false,
       usageCount: 0,
@@ -314,7 +314,7 @@ const ProductManagement = () => {
     <div className="product-management">
       <div className="pm-header">
         <h1>Product Management</h1>
-        <button 
+        <button
           className="btn-add-product"
           onClick={() => {
             resetForm();
@@ -332,6 +332,7 @@ const ProductManagement = () => {
       {showForm && (
         <div className="form-container">
           <div className="form-card">
+            <button className="modal-close-btn" onClick={resetForm} title="Close">×</button>
             <h2>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-row">
@@ -580,7 +581,7 @@ const ProductManagement = () => {
           <div className="delete-modal">
             <div className="delete-modal-header">
               <h3>Delete Product?</h3>
-              <button 
+              <button
                 className="modal-close"
                 onClick={cancelDelete}
                 title="Cancel"
@@ -589,12 +590,12 @@ const ProductManagement = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="delete-modal-body">
               <p>
                 Are you sure you want to delete <strong>"{deleteModal.productName}"</strong>?
               </p>
-              
+
               {/* ✅ NEW: Smart delete message based on product usage */}
               <div className="delete-info-box">
                 <p className="info-text">
@@ -607,21 +608,21 @@ const ProductManagement = () => {
                   <li>✅ You can reactivate it later if needed</li>
                 </ul>
               </div>
-              
+
               <p className="warning-text">
                 ⚠️ This action cannot be undone.
               </p>
             </div>
-            
+
             <div className="delete-modal-footer">
-              <button 
+              <button
                 className="btn-cancel-delete"
                 onClick={cancelDelete}
                 disabled={deleteModal.isDeleting}
               >
                 {deleteModal.isDeleting ? 'Processing...' : 'No, Keep It'}
               </button>
-              <button 
+              <button
                 className="btn-confirm-delete"
                 onClick={confirmDelete}
                 disabled={deleteModal.isDeleting}
@@ -632,7 +633,7 @@ const ProductManagement = () => {
           </div>
         </div>
       )}
-{/* 
+      {/* 
       <button
         className="theme-toggle"
         onClick={toggleTheme}

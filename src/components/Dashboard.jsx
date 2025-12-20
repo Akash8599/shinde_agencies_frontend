@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import ProductManagement from '../pages/ProductManagement';
 import Shop from '../pages/Shop';
+import logo from '../assets/logo-transparent.png';
 import SalesOrder from '../pages/SalesOrder';
 import CustomerManagement from '../pages/CustomerManagement';
 import PurchaseOrderManagement from '../pages/PurchaseOrderManagement';
@@ -34,6 +36,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -59,29 +62,19 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
   }, []);
 
   // Close mobile menu when view changes
-  const handleNavClick = (view) => {
-    setCurrentView(view);
+  const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+    if (window.innerWidth <= 768) {
+      setMobileMenuOpen(false);
+    }
   };
 
-  const renderContent = () => {
-    switch (currentView) {
-      case 'home':
-        return <HomeView setCurrentView={handleNavClick} />;
-      case 'products':
-        return <ProductManagement />;
-      case 'shop':
-        return <Shop />;
-      case 'orders':
-        return <SalesOrder />;
-      case 'customers':
-        return <CustomerManagement />;
-      case 'purchase':
-        return <PurchaseOrderManagement />;
-      case 'settings':
-        return <SettingsView onNavigateToSettings={onNavigateToSettings} />;
-      default:
-        return <HomeView setCurrentView={handleNavClick} />;
+  // ✅ Handle Menu Toggle (Desktop Hide / Mobile Open)
+  const handleMenuToggle = () => {
+    if (window.innerWidth <= 768) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setSidebarHidden(!sidebarHidden);
     }
   };
 
@@ -112,7 +105,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
         />
       )}
 
-      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''} ${sidebarHidden ? 'hidden-desktop' : ''}`}>
         <div className="sidebar-header">
           <h2>Shopix</h2>
           <p className="user-info">👤 {userName}</p>
@@ -122,61 +115,68 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
         <nav className="sidebar-nav">
           <ul>
             <li>
-              <button
-                onClick={() => handleNavClick('home')}
-                className={currentView === 'home' ? 'active' : ''}
+              <NavLink
+                to="/dashboard"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 📊 Dashboard
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button
-                onClick={() => handleNavClick('products')}
-                className={currentView === 'products' ? 'active' : ''}
+              <NavLink
+                to="/products"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 📦 Products
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button
-                onClick={() => handleNavClick('shop')}
-                className={currentView === 'shop' ? 'active' : ''}
+              <NavLink
+                to="/shop"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 🛒 Shop & Cart
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button
-                onClick={() => handleNavClick('orders')}
-                className={currentView === 'orders' ? 'active' : ''}
+              <NavLink
+                to="/orders"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 📋 Sales Orders
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button
-                onClick={() => handleNavClick('customers')}
-                className={currentView === 'customers' ? 'active' : ''}
+              <NavLink
+                to="/customers"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 👥 Customers
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button
-                onClick={() => handleNavClick('purchase')}
-                className={currentView === 'purchase' ? 'active' : ''}
+              <NavLink
+                to="/purchase-orders"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 🛒 Purchase Orders
-              </button>
+              </NavLink>
             </li>
 
             <li className="settings-section">
-              <button
-                onClick={() => handleNavClick('settings')}
-                className={currentView === 'settings' ? 'active' : ''}
+              <NavLink
+                to="/settings"
+                onClick={closeMobileMenu}
+                className={({ isActive }) => isActive ? 'active' : ''}
               >
                 ⚙️ Settings
-              </button>
+              </NavLink>
             </li>
           </ul>
         </nav>
@@ -193,7 +193,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
           <div className="top-bar-left">
             <button
               className="mobile-menu-toggle"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={handleMenuToggle}
             >
               ☰
             </button>
@@ -207,7 +207,7 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
         </header>
 
         <div className="content-area">
-          {renderContent()}
+          <Outlet />
         </div>
       </main>
     </div>
@@ -218,7 +218,8 @@ const Dashboard = ({ user, onLogout, onNavigateToSettings }) => {
 // HOME VIEW - DASHBOARD WITH STATS & AGENCY SHOWCASE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const HomeView = ({ setCurrentView }) => {
+export const HomeView = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -264,7 +265,7 @@ const HomeView = ({ setCurrentView }) => {
     }
   };
 
-  // ✅ Main fetch function for dashboard statistics
+  // ✅ Main fetch function for dashboard statistics (PARALLELIZED)
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
@@ -272,152 +273,91 @@ const HomeView = ({ setCurrentView }) => {
 
       const authToken = localStorage.getItem('authToken');
       if (!authToken) {
-        const errorMsg = 'No authentication token found. Please login again.';
-        setError(errorMsg);
+        setError('No authentication token found. Please login again.');
         setLoading(false);
         return;
       }
 
       const headers = {
         'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Content-Type': 'application/json'
       };
 
-      let totalProducts = 0;
-      let totalOrders = 0;
-      let totalRevenue = 0;
-      let totalCustomers = 0;
-      let unpaidOrders = 0;
-
-      // ✅ FETCH PRODUCTS using config endpoints
-      try {
-        const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.PRODUCTS}`;
-        const productsRes = await fetch(url, {
-          method: 'GET',
-          headers
-        });
-
-        if (productsRes.status === 304) {
-          totalProducts = 0;
-        } else if (productsRes.ok) {
-          const text = await productsRes.text();
-
-          if (text.trim().startsWith('<')) {
-            totalProducts = 0;
-          } else {
-            const products = safeJsonParse(text);
-            totalProducts = Array.isArray(products) ? products.length : 0;
-          }
-        } else {
-          totalProducts = 0;
+      // Helper to fetch array counts safely
+      const fetchCount = async (url) => {
+        try {
+          const res = await fetch(url, { headers });
+          if (!res.ok) return 0;
+          const text = await res.text();
+          if (text.trim().startsWith('<')) return 0;
+          const data = safeJsonParse(text);
+          return Array.isArray(data) ? data.length : 0;
+        } catch (err) {
+          console.warn(`Failed to fetch count from ${url}`, err);
+          return 0;
         }
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        totalProducts = 0;
-      }
+      };
 
-      // ✅ FETCH SALES ORDERS SUMMARY using config endpoints
-      try {
-        const url = `${API_CONFIG.BACKEND_URL}/api/sales-orders/summary/all`;
-        const ordersRes = await fetch(url, {
-          method: 'GET',
-          headers
-        });
-
-        if (ordersRes.status === 304) {
-          totalOrders = 0;
-          totalRevenue = 0;
-          unpaidOrders = 0;
-        } else if (ordersRes.ok) {
-          const text = await ordersRes.text();
-
-          if (text.trim().startsWith('<')) {
-            totalOrders = 0;
-            totalRevenue = 0;
-            unpaidOrders = 0;
-          } else {
-            const ordersSummary = safeJsonParse(text);
-            totalOrders = ordersSummary?.totalOrders || 0;
-            totalRevenue = ordersSummary?.totalRevenue || 0;
-            unpaidOrders = ordersSummary?.unpaidOrders || 0;
-          }
-        } else {
-          totalOrders = 0;
-          totalRevenue = 0;
-          unpaidOrders = 0;
+      // Helper to fetch order summary safely
+      const fetchOrderSummary = async () => {
+        try {
+          const url = `${API_CONFIG.BACKEND_URL}/api/sales-orders/summary/all`;
+          const res = await fetch(url, { headers });
+          if (!res.ok) return { totalOrders: 0, totalRevenue: 0, unpaidOrders: 0 };
+          const text = await res.text();
+          if (text.trim().startsWith('<')) return { totalOrders: 0, totalRevenue: 0, unpaidOrders: 0 };
+          const data = safeJsonParse(text);
+          return data || { totalOrders: 0, totalRevenue: 0, unpaidOrders: 0 };
+        } catch (err) {
+          console.warn('Failed to fetch order summary', err);
+          return { totalOrders: 0, totalRevenue: 0, unpaidOrders: 0 };
         }
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        totalOrders = 0;
-        totalRevenue = 0;
-        unpaidOrders = 0;
-      }
+      };
 
-      // ✅ FETCH CUSTOMERS using config endpoints
-      try {
-        const url = `${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.CUSTOMERS}`;
-        const customersRes = await fetch(url, {
-          method: 'GET',
-          headers
-        });
+      // ⚡ EXECUTE REQUESTS IN PARALLEL
+      // This reduces wait time significantly compared to sequential awaits
+      const [totalProducts, orderStats, totalCustomers] = await Promise.all([
+        fetchCount(`${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.PRODUCTS}`),
+        fetchOrderSummary(),
+        fetchCount(`${API_CONFIG.BACKEND_URL}${API_CONFIG.ENDPOINTS.CUSTOMERS}`)
+      ]);
 
-        if (customersRes.status === 304) {
-          totalCustomers = 0;
-        } else if (customersRes.ok) {
-          const text = await customersRes.text();
-
-          if (text.trim().startsWith('<')) {
-            totalCustomers = 0;
-          } else {
-            const customers = safeJsonParse(text);
-            totalCustomers = Array.isArray(customers) ? customers.length : 0;
-          }
-        } else {
-          totalCustomers = 0;
-        }
-      } catch (err) {
-        console.error('Error fetching customers:', err);
-        totalCustomers = 0;
-      }
-
-      // ✅ Update state
       setStats({
         totalProducts,
-        totalOrders,
-        totalRevenue,
+        totalOrders: orderStats.totalOrders || 0,
+        totalRevenue: orderStats.totalRevenue || 0,
         totalCustomers,
-        pendingOrders: unpaidOrders
+        pendingOrders: orderStats.unpaidOrders || 0
       });
 
       setLoading(false);
+
     } catch (error) {
-      const errorMsg = `Critical error: ${error.message}`;
-      setError(errorMsg);
+      console.error('Dashboard Stats Error:', error);
+      setError(error.message);
       setLoading(false);
     }
   };
 
-  // ✅ FIXED: Use useEffect with proper cleanup to prevent double calls
+  // ✅ FIXED: Optimized logic to decouple fast/slow fetches
   useEffect(() => {
     let mounted = true;
 
-    const loadDashboardData = async () => {
+    // 1. Fetch Company Name IMMEDIATELY (Fast, text only)
+    fetchCompanyName();
+
+    // 2. Fetch Heavy Stats with a small DELAY
+    // This allows the route transition/animation to finish smoothly 
+    // before minimizing network contention on the main thread.
+    const timer = setTimeout(() => {
       if (mounted) {
-        // ✅ Fetch both in parallel to reduce requests
-        await Promise.all([
-          fetchDashboardStats(),
-          fetchCompanyName()
-        ]);
+        fetchDashboardStats();
       }
-    };
+    }, 100);
 
-    loadDashboardData();
-
-    // ✅ Cleanup function to prevent state updates after unmount
     return () => {
       mounted = false;
+      clearTimeout(timer);
     };
   }, []); // ✅ Empty dependency array - runs ONLY ONCE on mount
 
@@ -508,25 +448,25 @@ const HomeView = ({ setCurrentView }) => {
               <h3>Quick Actions</h3>
               <div className="actions-grid">
                 <button
-                  onClick={() => setCurrentView('products')}
+                  onClick={() => navigate('/products')}
                   className="action-btn"
                 >
                   ➕ Add Product
                 </button>
                 <button
-                  onClick={() => setCurrentView('orders')}
+                  onClick={() => navigate('/orders')}
                   className="action-btn"
                 >
                   📋 View Orders
                 </button>
                 <button
-                  onClick={() => setCurrentView('customers')}
+                  onClick={() => navigate('/customers')}
                   className="action-btn"
                 >
                   👥 Customers
                 </button>
                 <button
-                  onClick={() => setCurrentView('purchase')}
+                  onClick={() => navigate('/purchase-orders')}
                   className="action-btn"
                 >
                   🛒 Purchase
@@ -587,7 +527,8 @@ const HomeView = ({ setCurrentView }) => {
 // SETTINGS VIEW
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SettingsView = ({ onNavigateToSettings }) => {
+export const SettingsView = () => {
+  const navigate = useNavigate();
   return (
     <div className="settings-view">
       <h2>⚙️ Configuration</h2>
@@ -598,7 +539,7 @@ const SettingsView = ({ onNavigateToSettings }) => {
           <h3>Company Settings</h3>
           <p>Manage company details, bank information, logos, and signatures for professional invoices</p>
           <button
-            onClick={onNavigateToSettings}
+            onClick={() => navigate('/company-settings')}
             className="btn btn-primary full-width"
           >
             ⚙️ Configure
