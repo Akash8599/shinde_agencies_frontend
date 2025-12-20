@@ -39,7 +39,7 @@ const Shop = () => {
     statecode: ''
   });
 
-  // New customer form
+  // New customer form - ✅ ADDED statecode
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     phone: '',
@@ -82,7 +82,7 @@ const Shop = () => {
     }
   };
 
-  // ✅ Create new customer
+  // ✅ Create new customer - NOW INCLUDES statecode
   const handleCreateNewCustomer = async (e) => {
     e.preventDefault();
     setError('');
@@ -106,10 +106,11 @@ const Shop = () => {
         address: response.data.address || '',
         gstin: response.data.gstin || '',
         city: response.data.city || '',
-        state: response.data.state || ''
+        state: response.data.state || '',
+        statecode: response.data.statecode || ''
       });
 
-      // Reset form
+      // Reset form - ✅ RESET statecode too
       setNewCustomer({
         name: '',
         phone: '',
@@ -118,7 +119,8 @@ const Shop = () => {
         gstin: '',
         city: '',
         state: '',
-        pincode: ''
+        pincode: '',
+        statecode: ''
       });
       setShowNewCustomerForm(false);
       setTimeout(() => setSuccess(''), 2000);
@@ -138,7 +140,8 @@ const Shop = () => {
       address: customer.address || '',
       gstin: customer.gstin || '',
       city: customer.city || '',
-      state: customer.state || ''
+      state: customer.state || '',
+      statecode: customer.statecode || ''
     });
     setCustomerSearchTerm('');
   };
@@ -316,7 +319,7 @@ const Shop = () => {
     customer.phone.includes(customerSearchTerm)
   );
 
-  // Create sales order - WITH DECIMAL SUPPORT
+  // Create sales order - WITH DECIMAL SUPPORT - ✅ NOW INCLUDES statecode
   const handleCreateSalesOrder = async (e) => {
     e.preventDefault();
     setError('');
@@ -342,6 +345,7 @@ const Shop = () => {
         customerAddress: customerInfo.address,
         customerGstIn: customerInfo.gstin,
         customerState: customerInfo.state,
+        customerStateCode: customerInfo.statecode,
 
         items: cart.map(item => ({
           productId: item.productId,
@@ -363,7 +367,7 @@ const Shop = () => {
 
       // Reset everything
       setCart([]);
-      setCustomerInfo({ name: '', phone: '', email: '', address: '', gstin: '', city: '', state: '' });
+      setCustomerInfo({ name: '', phone: '', email: '', address: '', gstin: '', city: '', state: '', statecode: '' });
       setSelectedCustomerId(null);
       setCustomPrices({});
       setShowCartModal(false);
@@ -636,7 +640,7 @@ const Shop = () => {
                   </div>
                 )}
 
-                {/* ✅ NEW CUSTOMER FORM - MODAL WITH BLUR BACKGROUND */}
+                {/* ✅ NEW CUSTOMER FORM - MODAL WITH BLUR BACKGROUND - NOW WITH STATE CODE */}
                 {showNewCustomerForm && (
                   <div className="customer-form-modal-overlay" onClick={() => setShowNewCustomerForm(false)}>
                     <div className="customer-form-modal" onClick={(e) => e.stopPropagation()}>
@@ -709,12 +713,38 @@ const Shop = () => {
                             />
                           </div>
                           <div className="form-group">
-                            <label>State</label>
+                            <label>State *</label>
                             <input
                               type="text"
                               value={newCustomer.state}
                               onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}
                               placeholder="State"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* ✅ NEW: State Code Field */}
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>State Code *</label>
+                            <input
+                              type="text"
+                              value={newCustomer.statecode}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, statecode: e.target.value })}
+                              placeholder="e.g., 27"
+                              maxLength="2"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Pincode *</label>
+                            <input
+                              type="text"
+                              value={newCustomer.pincode}
+                              onChange={(e) => setNewCustomer({ ...newCustomer, pincode: e.target.value })}
+                              placeholder="413102"
+                              required
                             />
                           </div>
                         </div>
@@ -726,16 +756,6 @@ const Shop = () => {
                             onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
                             placeholder="Street address"
                             rows="2"
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label>Pincode</label>
-                          <input
-                            type="text"
-                            value={newCustomer.pincode}
-                            onChange={(e) => setNewCustomer({ ...newCustomer, pincode: e.target.value })}
-                            placeholder="413102"
                           />
                         </div>
 
@@ -767,6 +787,7 @@ const Shop = () => {
                       {customerInfo.address && <p>📍 {customerInfo.address}</p>}
                       {customerInfo.city && <p>🏙️ {customerInfo.city}</p>}
                       {customerInfo.gstin && <p>🔢 {customerInfo.gstin}</p>}
+                      {customerInfo.statecode && <p>📌 State Code: {customerInfo.statecode}</p>}
                     </div>
                   </div>
                 )}
