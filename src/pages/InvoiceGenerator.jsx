@@ -40,7 +40,13 @@ const InvoiceGenerator = ({ orderId, onClose }) => {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        
+        windowWidth: 1200, // ✅ Force desktop width
+        width: 1200,       // ✅ Force capture width
+        x: 0,
+        y: 0,
+        scrollY: -window.scrollY // ✅ Handle scroll position
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -188,7 +194,7 @@ const InvoiceGenerator = ({ orderId, onClose }) => {
                 <p className="entity-name"><strong>{invoiceData.companyName}</strong></p>
                 <p>{invoiceData.address}</p>
                 {invoiceData.city && <p>{invoiceData.city}, {invoiceData.state} - {invoiceData.postalCode}</p>}
-                
+
                 {/* ✅ ADDED: GSTIN/UIN and State Code in compact inline layout */}
                 <div className="gst-info-row">
                   <div className="gst-item">
@@ -212,7 +218,7 @@ const InvoiceGenerator = ({ orderId, onClose }) => {
                 <p className="entity-name"><strong>{invoiceData.customerName}</strong></p>
                 <p>{invoiceData.customerAddress}</p>
                 {invoiceData.customerCity && <p>{invoiceData.customerCity}, {invoiceData.customerState} - {invoiceData.customerPostalCode}</p>}
-                
+
                 {/* ✅ ADDED: Buyer GSTIN/UIN and State Code */}
                 <div className="gst-info-row">
                   {invoiceData.customerGstIn && (

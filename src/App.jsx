@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Login from './pages/Login';
 import Dashboard, { HomeView, SettingsView } from './components/Dashboard';
@@ -16,6 +16,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -40,7 +41,10 @@ function App() {
       role: loginData.role
     });
     setIsAuthenticated(true);
-    navigate('/dashboard');
+
+    // ✅ Redirect to original page or dashboard
+    const origin = location.state?.from?.pathname || '/dashboard';
+    navigate(origin, { replace: true });
   };
 
   const handleLogout = () => {
@@ -101,7 +105,7 @@ function App() {
                 onLogout={handleLogout}
               />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" state={{ from: location }} replace />
             )
           }
         >
@@ -110,9 +114,21 @@ function App() {
           <Route path="dashboard" element={<HomeView />} />
           <Route path="shop" element={<Shop />} />
           <Route path="products" element={<ProductManagement />} />
+          {/* ✅ Edit Product Route */}
+          <Route path="products/:productId" element={<ProductManagement />} />
+          {/* ✅ Delete Product Route */}
+          <Route path="products/:productId/delete" element={<ProductManagement />} />
           <Route path="customers" element={<CustomerManagement />} />
+          {/* ✅ Edit Customer Route */}
+          <Route path="customers/:customerId" element={<CustomerManagement />} />
+          {/* ✅ Delete Customer Route */}
+          <Route path="customers/:customerId/delete" element={<CustomerManagement />} />
           <Route path="purchase-orders" element={<PurchaseOrderManagement />} />
+          {/* ✅ View PO Route */}
+          <Route path="purchase-orders/:orderId" element={<PurchaseOrderManagement />} />
           <Route path="orders" element={<SalesOrder />} />
+          {/* ✅ View Order Route */}
+          <Route path="orders/:orderId" element={<SalesOrder />} />
           <Route path="settings" element={<SettingsView />} />
         </Route>
 
@@ -122,7 +138,7 @@ function App() {
             isAuthenticated ? (
               <CompanySettings onBackToDashboard={handleBackToDashboard} />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" state={{ from: location }} replace />
             )
           }
         />
