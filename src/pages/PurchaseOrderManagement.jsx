@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import API_CONFIG from '../config/Api';
 import './PurchaseOrderManagement.css';
 
 function PurchaseOrderManagement() {
+  const { orderId } = useParams();
+  const navigate = useNavigate();
+
   const [currentView, setCurrentView] = useState('list');
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [filteredPOs, setFilteredPOs] = useState([]);
@@ -44,6 +48,23 @@ function PurchaseOrderManagement() {
   useEffect(() => {
     filterPOs();
   }, [searchTerm, purchaseOrders]);
+
+  // ✅ Sync URL with View Mode
+  useEffect(() => {
+    if (orderId && purchaseOrders.length > 0) {
+      const po = purchaseOrders.find(p => p.id === parseInt(orderId));
+      if (po) {
+        setSelectedPO(po);
+        setCurrentView('view');
+      }
+    } else if (!orderId) {
+      setSelectedPO(null);
+      // Only switch to list if we were viewing an order (keeps 'create' view intact)
+      if (currentView === 'view') {
+        setCurrentView('list');
+      }
+    }
+  }, [orderId, purchaseOrders, currentView]);
 
   const fetchPurchaseOrders = async () => {
     try {
@@ -214,7 +235,7 @@ function PurchaseOrderManagement() {
       await axiosInstance.post(API_CONFIG.ENDPOINTS.RECEIVE_PURCHASE_ORDER(poId));
       setSuccess('✓ Purchase order received successfully');
       fetchPurchaseOrders();
-      setCurrentView('list');
+      navigate('/purchase-orders');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error receiving PO:', err);
@@ -231,7 +252,7 @@ function PurchaseOrderManagement() {
         await axiosInstance.post(API_CONFIG.ENDPOINTS.CANCEL_PURCHASE_ORDER(poId));
         setSuccess('✓ Purchase order cancelled');
         fetchPurchaseOrders();
-        setCurrentView('list');
+        navigate('/purchase-orders');
         setTimeout(() => setSuccess(''), 3000);
       } catch (err) {
         console.error('Error cancelling PO:', err);
@@ -243,8 +264,7 @@ function PurchaseOrderManagement() {
   };
 
   const handleViewPO = (po) => {
-    setSelectedPO(po);
-    setCurrentView('view');
+    navigate(`/purchase-orders/${po.id}`);
   };
 
   const calculateItemTotal = (quantity, costPrice) => {
@@ -650,7 +670,7 @@ function PurchaseOrderManagement() {
           <div className="po-view">
             <button
               className="btn-back"
-              onClick={() => setCurrentView('list')}
+              onClick={() => navigate('/purchase-orders')}
             >
               ← Back
             </button>

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import InvoiceGenerator from './InvoiceGenerator';
 import './SalesOrder.css';
 
 const SalesOrder = () => {
+  const { orderId } = useParams();
+  const navigate = useNavigate();
+
   const [salesOrders, setSalesOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -21,6 +25,18 @@ const SalesOrder = () => {
   useEffect(() => {
     filterOrders();
   }, [searchTerm, salesOrders]);
+
+  // ✅ Sync URL with Selected Order
+  useEffect(() => {
+    if (orderId && salesOrders.length > 0) {
+      const order = salesOrders.find(o => o.id === parseInt(orderId));
+      if (order) {
+        setSelectedOrder(order);
+      }
+    } else if (!orderId) {
+      setSelectedOrder(null);
+    }
+  }, [orderId, salesOrders]);
 
   const fetchSalesOrders = async () => {
     try {
@@ -68,7 +84,7 @@ const SalesOrder = () => {
   };
 
   const handleViewOrder = (order) => {
-    setSelectedOrder(order);
+    navigate(`/orders/${order.id}`);
   };
 
   const handlePrintInvoice = (orderId) => {
@@ -77,7 +93,7 @@ const SalesOrder = () => {
   };
 
   const closeDetailsModal = () => {
-    setSelectedOrder(null);
+    navigate('/orders');
   };
 
   const formatDate = (dateString) => {
@@ -196,7 +212,7 @@ const SalesOrder = () => {
           {filteredOrders.map((order) => {
             const totals = calculateOrderTotal(order.items);
             const itemCount = (order.items || []).length;
-            
+
             return (
               <div key={order.id} className="order-card-futuristic">
                 {/* Card Header */}

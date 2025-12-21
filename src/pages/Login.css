@@ -28,7 +28,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,7 +70,7 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
   background-size: 60px 60px;
@@ -80,6 +81,7 @@ html, body {
   0% {
     background-position: 0 0;
   }
+
   100% {
     background-position: 60px 60px;
   }
@@ -196,18 +198,23 @@ html, body {
 }
 
 @keyframes floatProduct {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotateZ(0deg) scale(1);
     opacity: 0.12;
   }
+
   25% {
     transform: translateY(-40px) rotateZ(5deg) scale(1.1);
     opacity: 0.15;
   }
+
   50% {
     transform: translateY(0) rotateZ(0deg) scale(1);
     opacity: 0.12;
   }
+
   75% {
     transform: translateY(40px) rotateZ(-5deg) scale(0.9);
     opacity: 0.08;
@@ -261,20 +268,47 @@ html, body {
 }
 
 @keyframes float1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(60px, -60px) scale(1.15); }
-  66% { transform: translate(-40px, 40px) scale(0.85); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(60px, -60px) scale(1.15);
+  }
+
+  66% {
+    transform: translate(-40px, 40px) scale(0.85);
+  }
 }
 
 @keyframes float2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-80px, 50px) scale(0.9); }
-  66% { transform: translate(60px, -60px) scale(1.1); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-80px, 50px) scale(0.9);
+  }
+
+  66% {
+    transform: translate(60px, -60px) scale(1.1);
+  }
 }
 
 @keyframes float3 {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.3); }
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+  }
 }
 
 /* Dark Overlay */
@@ -284,12 +318,10 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(15, 20, 25, 0.92) 0%,
-    rgba(26, 32, 44, 0.88) 50%,
-    rgba(15, 20, 25, 0.92) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(15, 20, 25, 0.92) 0%,
+      rgba(26, 32, 44, 0.88) 50%,
+      rgba(15, 20, 25, 0.92) 100%);
   z-index: 1;
   backdrop-filter: blur(2px);
 }
@@ -314,6 +346,7 @@ html, body {
     opacity: 0;
     transform: translateX(-50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -333,8 +366,15 @@ html, body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 .brand-title {
@@ -354,6 +394,7 @@ html, body {
     opacity: 0;
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -394,16 +435,28 @@ html, body {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-.feature-item:nth-child(1) { animation-delay: 0.3s; }
-.feature-item:nth-child(2) { animation-delay: 0.4s; }
-.feature-item:nth-child(3) { animation-delay: 0.5s; }
-.feature-item:nth-child(4) { animation-delay: 0.6s; }
+.feature-item:nth-child(1) {
+  animation-delay: 0.3s;
+}
+
+.feature-item:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.feature-item:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+.feature-item:nth-child(4) {
+  animation-delay: 0.6s;
+}
 
 .feature-item:hover {
   background: rgba(37, 99, 235, 0.15);
@@ -419,14 +472,32 @@ html, body {
   animation: bounce 2s ease-in-out infinite;
 }
 
-.feature-item:nth-child(1) .feature-icon { animation-delay: 0s; }
-.feature-item:nth-child(2) .feature-icon { animation-delay: 0.2s; }
-.feature-item:nth-child(3) .feature-icon { animation-delay: 0.4s; }
-.feature-item:nth-child(4) .feature-icon { animation-delay: 0.6s; }
+.feature-item:nth-child(1) .feature-icon {
+  animation-delay: 0s;
+}
+
+.feature-item:nth-child(2) .feature-icon {
+  animation-delay: 0.2s;
+}
+
+.feature-item:nth-child(3) .feature-icon {
+  animation-delay: 0.4s;
+}
+
+.feature-item:nth-child(4) .feature-icon {
+  animation-delay: 0.6s;
+}
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .feature-item span:last-child {
@@ -455,15 +526,24 @@ html, body {
     opacity: 0;
     transform: scale(0);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-.stat:nth-child(1) { animation-delay: 0.7s; }
-.stat:nth-child(2) { animation-delay: 0.8s; }
-.stat:nth-child(3) { animation-delay: 0.9s; }
+.stat:nth-child(1) {
+  animation-delay: 0.7s;
+}
+
+.stat:nth-child(2) {
+  animation-delay: 0.8s;
+}
+
+.stat:nth-child(3) {
+  animation-delay: 0.9s;
+}
 
 .stat-number {
   font-size: 18px;
@@ -500,6 +580,7 @@ html, body {
     opacity: 0;
     transform: translateX(50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -527,6 +608,7 @@ html, body {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -545,8 +627,13 @@ html, body {
 }
 
 @keyframes glowRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .login-card::before {
@@ -623,8 +710,13 @@ html, body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .form-header h2 {
@@ -655,17 +747,32 @@ html, body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.login-form-group:nth-of-type(1) { animation-delay: 0.3s; }
-.login-form-group:nth-of-type(2) { animation-delay: 0.4s; }
-.login-form-group:nth-of-type(3) { animation-delay: 0.5s; }
-.login-form-group:nth-of-type(4) { animation-delay: 0.6s; }
-.login-form-group:nth-of-type(5) { animation-delay: 0.7s; }
+.login-form-group:nth-of-type(1) {
+  animation-delay: 0.3s;
+}
+
+.login-form-group:nth-of-type(2) {
+  animation-delay: 0.4s;
+}
+
+.login-form-group:nth-of-type(3) {
+  animation-delay: 0.5s;
+}
+
+.login-form-group:nth-of-type(4) {
+  animation-delay: 0.6s;
+}
+
+.login-form-group:nth-of-type(5) {
+  animation-delay: 0.7s;
+}
 
 /* ✅ UNIQUE LOGIN LABEL - NO COLOR CONFLICTS */
 .login-form-group label {

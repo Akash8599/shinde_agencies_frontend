@@ -1190,21 +1190,44 @@ body {
   }
 
   /* ✅ UNIQUE: SIDEBAR MOBILE HIDDEN STATE */
+  /* ✅ UNIQUE: SIDEBAR MOBILE HIDDEN STATE */
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
     width: 260px;
-    height: 100vh;
+    height: 100dvh;
+    /* Better mobile height support */
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+
+    /* Flex layout to keep footer visible */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Prevent body scroll */
+
     padding: 28px 16px;
     margin: 0;
     box-shadow: var(--shadow-lg);
+  }
+
+  /* Ensure Nav scrolls while footer stays fixed */
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    /* Flexbox scroll fix */
+    margin-bottom: 12px;
+  }
+
+  /* Ensure footer stays at bottom */
+  .sidebar-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
   }
 
   /* ✅ UNIQUE: SIDEBAR MOBILE OPEN STATE */
