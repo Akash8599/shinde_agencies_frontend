@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import API_CONFIG from '../config/Api';
 import './ProductManagement.css';
 
 const ProductManagement = () => {
+  const { productId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +19,67 @@ const ProductManagement = () => {
 
   // ✅ FIX: Prevent double API calls in Strict Mode
   const apiCallMade = useRef(false);
+
+  // ✅ SYNC URL WITH MODAL STATE (Deep Linking)
+  useEffect(() => {
+    // If no data, nothing to sync yet
+    if (products.length === 0) return;
+
+    // Is it a delete route?
+    const isDeleteRoute = location.pathname.endsWith('/delete');
+
+    if (productId) {
+      const product = products.find(p => p.id.toString() === productId);
+
+      if (product) {
+        if (isDeleteRoute) {
+          // OPEN DELETE MODAL
+          setDeleteModal(prev => ({
+            ...prev,
+            isOpen: true,
+            productId: product.id,
+            productName: product.name,
+            isUsedInOrders: false,
+            usageCount: 0,
+            isDeleting: false
+          }));
+          // Ensure Edit form is closed if we jumped straight to delete
+          setShowForm(false);
+          setEditingId(null);
+        } else {
+          // OPEN EDIT FORM
+          setFormData({
+            sku: product.sku,
+            name: product.name,
+            description: product.description || '',
+            costPrice: product.costPrice.toString(),
+            sellingPrice: product.sellingPrice.toString(),
+            gstRate: product.gstRate.toString(),
+            quantity: product.quantity.toString(),
+            lowStockAlert: product.lowStockAlert.toString()
+          });
+          setEditingId(product.id);
+          setShowForm(true);
+
+          // Ensure delete modal is closed
+          setDeleteModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    } else {
+      // NO ID -> Reset everything
+      setDeleteModal(prev => ({ ...prev, isOpen: false }));
+
+      if (editingId) {
+        setEditingId(null);
+        setShowForm(false);
+        setFormData({
+          sku: '', name: '', description: '',
+          costPrice: '', sellingPrice: '',
+          gstRate: '18', quantity: '', lowStockAlert: '10'
+        });
+      }
+    }
+  }, [productId, products, location.pathname]);
 
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('pm-theme');
@@ -117,6 +183,7 @@ const ProductManagement = () => {
 
   // Reset form
   const resetForm = () => {
+    navigate('/products');
     setFormData({
       sku: '',
       name: '',
@@ -194,34 +261,17 @@ const ProductManagement = () => {
 
   // Handle edit product
   const handleEdit = (product) => {
-    setFormData({
-      sku: product.sku,
-      name: product.name,
-      description: product.description || '',
-      costPrice: product.costPrice.toString(),
-      sellingPrice: product.sellingPrice.toString(),
-      gstRate: product.gstRate.toString(),
-      quantity: product.quantity.toString(),
-      lowStockAlert: product.lowStockAlert.toString()
-    });
-    setEditingId(product.id);
-    setShowForm(true);
+    navigate(`/products/${product.id}`);
   };
 
   // ════════════════════════════════════════════════════════════════════════
   // ✅ UPDATED: Handle delete product click - Check if used in orders
   // ════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════
+  // ✅ UPDATED: Handle delete product click - Check if used in orders
+  // ════════════════════════════════════════════════════════════════════════
   const handleDeleteClick = (productId, productName) => {
-    // Show delete modal with info
-    // Backend will handle checking if product is used
-    setDeleteModal({
-      isOpen: true,
-      productId,
-      productName,
-      isUsedInOrders: false,
-      usageCount: 0,
-      isDeleting: false
-    });
+    navigate(`/products/${productId}/delete`);
   };
 
   // ════════════════════════════════════════════════════════════════════════
@@ -236,31 +286,26 @@ const ProductManagement = () => {
       await axiosInstance.delete(API_CONFIG.ENDPOINTS.DELETE_PRODUCT(productId));
 
       setSuccess(`✓ "${productName}" deleted successfully!`);
+      // Update local state without refetching immediately for speed visual
+      setProducts(prev => prev.filter(p => p.id !== productId));
+
+      // ✅ Close: Return to main list
+      navigate('/products');
+
+      // Still fetch to be sure
       fetchProducts();
-      setDeleteModal({
-        isOpen: false,
-        productId: null,
-        productName: '',
-        isUsedInOrders: false,
-        usageCount: 0,
-        isDeleting: false
-      });
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to delete product';
 
       // ✅ NEW: Handle smart delete error messages
       if (errorMessage.includes('used in') || errorMessage.includes('sales order')) {
         // Product is used in orders - it was soft deleted
+        // Product is used in orders - it was soft deleted
         setSuccess(`✓ Product marked as inactive (hidden from new orders). Historical data preserved.`);
         fetchProducts();
-        setDeleteModal({
-          isOpen: false,
-          productId: null,
-          productName: '',
-          isUsedInOrders: false,
-          usageCount: 0,
-          isDeleting: false
-        });
+
+        // ✅ Close: Return to main list
+        navigate('/products');
       } else {
         setError(errorMessage);
       }
@@ -271,15 +316,10 @@ const ProductManagement = () => {
 
   // Cancel delete
   const cancelDelete = () => {
-    setDeleteModal({
-      isOpen: false,
-      productId: null,
-      productName: '',
-      isUsedInOrders: false,
-      usageCount: 0,
-      isDeleting: false
-    });
+    navigate('/products');
   };
+
+
 
   // Filter products by search
   const filteredProducts = products.filter(product =>
@@ -317,7 +357,13 @@ const ProductManagement = () => {
         <button
           className="btn-add-product"
           onClick={() => {
-            resetForm();
+            navigate('/products');
+            setEditingId(null);
+            setFormData({
+              sku: '', name: '', description: '',
+              costPrice: '', sellingPrice: '',
+              gstRate: '18', quantity: '', lowStockAlert: '10'
+            });
             setShowForm(true);
           }}
           title="Add a new product"
@@ -329,137 +375,139 @@ const ProductManagement = () => {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      {showForm && (
-        <div className="form-container">
-          <div className="form-card">
-            <button className="modal-close-btn" onClick={resetForm} title="Close">×</button>
-            <h2>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="sku">SKU (Product Code) *</label>
-                  <input
-                    id="sku"
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleInputChange}
-                    placeholder="e.g., PROD001"
-                    disabled={editingId !== null}
-                    required
-                  />
+      {
+        showForm && (
+          <div className="form-container">
+            <div className="form-card">
+              <button className="modal-close-btn" onClick={resetForm} title="Close">×</button>
+              <h2>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
+              <form onSubmit={handleSubmit}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="sku">SKU (Product Code) *</label>
+                    <input
+                      id="sku"
+                      type="text"
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleInputChange}
+                      placeholder="e.g., PROD001"
+                      disabled={editingId !== null}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="name">Product Name *</label>
+                    <input
+                      id="name"
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Hammer"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="name">Product Name *</label>
-                  <input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Hammer"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="form-group form-row full">
-                <label htmlFor="description">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Product details (optional)"
-                  rows="2"
-                />
-              </div>
+                <div className="form-group form-row full">
+                  <label htmlFor="description">Description</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Product details (optional)"
+                    rows="2"
+                  />
+                </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="costPrice">Cost Price (₹) *</label>
-                  <input
-                    id="costPrice"
-                    type="number"
-                    name="costPrice"
-                    value={formData.costPrice}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    required
-                  />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="costPrice">Cost Price (₹) *</label>
+                    <input
+                      id="costPrice"
+                      type="number"
+                      name="costPrice"
+                      value={formData.costPrice}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="sellingPrice">Selling Price (₹) *</label>
+                    <input
+                      id="sellingPrice"
+                      type="number"
+                      name="sellingPrice"
+                      value={formData.sellingPrice}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="sellingPrice">Selling Price (₹) *</label>
-                  <input
-                    id="sellingPrice"
-                    type="number"
-                    name="sellingPrice"
-                    value={formData.sellingPrice}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="gstRate">GST Rate (%)</label>
-                  <select
-                    id="gstRate"
-                    name="gstRate"
-                    value={formData.gstRate}
-                    onChange={handleInputChange}
-                  >
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                  </select>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="gstRate">GST Rate (%)</label>
+                    <select
+                      id="gstRate"
+                      name="gstRate"
+                      value={formData.gstRate}
+                      onChange={handleInputChange}
+                    >
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18%</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="quantity">Initial Quantity *</label>
+                    <input
+                      id="quantity"
+                      type="number"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      placeholder="0"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="lowStockAlert">Low Stock Alert</label>
+                    <input
+                      id="lowStockAlert"
+                      type="number"
+                      name="lowStockAlert"
+                      value={formData.lowStockAlert}
+                      onChange={handleInputChange}
+                      placeholder="10"
+                      min="0"
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="quantity">Initial Quantity *</label>
-                  <input
-                    id="quantity"
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    placeholder="0"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="lowStockAlert">Low Stock Alert</label>
-                  <input
-                    id="lowStockAlert"
-                    type="number"
-                    name="lowStockAlert"
-                    value={formData.lowStockAlert}
-                    onChange={handleInputChange}
-                    placeholder="10"
-                    min="0"
-                  />
-                </div>
-              </div>
 
-              <div className="form-actions">
-                <button type="submit" className="btn-submit">
-                  {editingId ? '✓ Update Product' : '+ Add Product'}
-                </button>
-                <button type="button" className="btn-cancel" onClick={resetForm}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button type="submit" className="btn-submit">
+                    {editingId ? '✓ Update Product' : '+ Add Product'}
+                  </button>
+                  <button type="button" className="btn-cancel" onClick={resetForm}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <div className="search-container">
         <input
@@ -473,166 +521,170 @@ const ProductManagement = () => {
         <span className="result-count">{filteredProducts.length} results</span>
       </div>
 
-      {loading ? (
-        // ════════════════════════════════════════════════════════════════════
-        // ✅ NEW: SKELETON LOADING TABLE - SMOOTH & PROFESSIONAL
-        // ════════════════════════════════════════════════════════════════════
-        <div className="products-table-container">
-          <table className="products-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Description</th>
-                <th>Cost Price</th>
-                <th>Selling Price</th>
-                <th>Profit</th>
-                <th>Margin %</th>
-                <th>GST</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Show 8 skeleton rows for loading state */}
-              {[...Array(8)].map((_, index) => (
-                <SkeletonRow key={`skeleton-${index}`} index={index} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="no-products">
-          <p>No products found. {products.length === 0 && <a onClick={() => setShowForm(true)}>Add your first product</a>}</p>
-        </div>
-      ) : (
-        <div className="products-table-container">
-          <table className="products-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Description</th>
-                <th>Cost Price</th>
-                <th>Selling Price</th>
-                <th>Profit</th>
-                <th>Margin %</th>
-                <th>GST</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product, index) => {
-                const profit = product.sellingPrice - product.costPrice;
-                const margin = ((profit / product.costPrice) * 100).toFixed(2);
-                const isLowStock = product.quantity <= product.lowStockAlert;
+      {
+        loading ? (
+          // ════════════════════════════════════════════════════════════════════
+          // ✅ NEW: SKELETON LOADING TABLE - SMOOTH & PROFESSIONAL
+          // ════════════════════════════════════════════════════════════════════
+          <div className="products-table-container">
+            <table className="products-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Description</th>
+                  <th>Cost Price</th>
+                  <th>Selling Price</th>
+                  <th>Profit</th>
+                  <th>Margin %</th>
+                  <th>GST</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Show 8 skeleton rows for loading state */}
+                {[...Array(8)].map((_, index) => (
+                  <SkeletonRow key={`skeleton-${index}`} index={index} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="no-products">
+            <p>No products found. {products.length === 0 && <a onClick={() => setShowForm(true)}>Add your first product</a>}</p>
+          </div>
+        ) : (
+          <div className="products-table-container">
+            <table className="products-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Description</th>
+                  <th>Cost Price</th>
+                  <th>Selling Price</th>
+                  <th>Profit</th>
+                  <th>Margin %</th>
+                  <th>GST</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product, index) => {
+                  const profit = product.sellingPrice - product.costPrice;
+                  const margin = ((profit / product.costPrice) * 100).toFixed(2);
+                  const isLowStock = product.quantity <= product.lowStockAlert;
 
-                return (
-                  <tr key={product.id} className={isLowStock ? 'low-stock-row' : ''} style={{
-                    animation: `fadeIn 0.5s ease-out ${index * 0.05}s both`
-                  }}>
-                    <td className="name">{product.name}</td>
-                    <td className="description">{product.description || '—'}</td>
-                    <td className="price">₹{product.costPrice.toFixed(2)}</td>
-                    <td className="price">₹{product.sellingPrice.toFixed(2)}</td>
-                    <td className="profit">₹{profit.toFixed(2)}</td>
-                    <td className="margin">{margin}%</td>
-                    <td className="gst">{product.gstRate}%</td>
-                    <td className={`quantity ${isLowStock ? 'alert' : ''}`}>
-                      {product.quantity}
-                      {isLowStock && <span className="alert-badge">⚠️</span>}
-                    </td>
-                    <td className="status">
-                      <span className={`badge ${isLowStock ? 'badge-warning' : 'badge-success'}`}>
-                        {isLowStock ? 'Low Stock' : 'In Stock'}
-                      </span>
-                    </td>
-                    <td className="actions">
-                      <button
-                        className="btn-edit"
-                        onClick={() => handleEdit(product)}
-                        title="Edit this product"
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDeleteClick(product.id, product.name)}
-                        title="Delete this product"
-                      >
-                        🗑️ Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                  return (
+                    <tr key={product.id} className={isLowStock ? 'low-stock-row' : ''} style={{
+                      animation: `fadeIn 0.5s ease-out ${index * 0.05}s both`
+                    }}>
+                      <td className="name">{product.name}</td>
+                      <td className="description">{product.description || '—'}</td>
+                      <td className="price">₹{product.costPrice.toFixed(2)}</td>
+                      <td className="price">₹{product.sellingPrice.toFixed(2)}</td>
+                      <td className="profit">₹{profit.toFixed(2)}</td>
+                      <td className="margin">{margin}%</td>
+                      <td className="gst">{product.gstRate}%</td>
+                      <td className={`quantity ${isLowStock ? 'alert' : ''}`}>
+                        {product.quantity}
+                        {isLowStock && <span className="alert-badge">⚠️</span>}
+                      </td>
+                      <td className="status">
+                        <span className={`badge ${isLowStock ? 'badge-warning' : 'badge-success'}`}>
+                          {isLowStock ? 'Low Stock' : 'In Stock'}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <button
+                          className="btn-edit"
+                          onClick={() => handleEdit(product)}
+                          title="Edit this product"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="btn-delete"
+                          onClick={() => handleDeleteClick(product.id, product.name)}
+                          title="Delete this product"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
 
       {/* ════════════════════════════════════════════════════════════════════
           DELETE CONFIRMATION MODAL - UPDATED
           Shows smart messages for soft delete vs hard delete
           ════════════════════════════════════════════════════════════════════ */}
-      {deleteModal.isOpen && (
-        <div className="modal-overlay">
-          <div className="delete-modal">
-            <div className="delete-modal-header">
-              <h3>Delete Product?</h3>
-              <button
-                className="modal-close"
-                onClick={cancelDelete}
-                title="Cancel"
-                disabled={deleteModal.isDeleting}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="delete-modal-body">
-              <p>
-                Are you sure you want to delete <strong>"{deleteModal.productName}"</strong>?
-              </p>
-
-              {/* ✅ NEW: Smart delete message based on product usage */}
-              <div className="delete-info-box">
-                <p className="info-text">
-                  💡 <strong>What happens:</strong>
-                </p>
-                <ul className="info-list">
-                  <li>✅ Old orders & invoices will remain intact</li>
-                  <li>✅ Order history is preserved with product snapshots</li>
-                  <li>✅ This product will be hidden from new orders</li>
-                  <li>✅ You can reactivate it later if needed</li>
-                </ul>
+      {
+        deleteModal.isOpen && (
+          <div className="modal-overlay">
+            <div className="delete-modal">
+              <div className="delete-modal-header">
+                <h3>Delete Product?</h3>
+                <button
+                  className="modal-close"
+                  onClick={cancelDelete}
+                  title="Cancel"
+                  disabled={deleteModal.isDeleting}
+                >
+                  ✕
+                </button>
               </div>
 
-              <p className="warning-text">
-                ⚠️ This action cannot be undone.
-              </p>
-            </div>
+              <div className="delete-modal-body">
+                <p>
+                  Are you sure you want to delete <strong>"{deleteModal.productName}"</strong>?
+                </p>
 
-            <div className="delete-modal-footer">
-              <button
-                className="btn-cancel-delete"
-                onClick={cancelDelete}
-                disabled={deleteModal.isDeleting}
-              >
-                {deleteModal.isDeleting ? 'Processing...' : 'No, Keep It'}
-              </button>
-              <button
-                className="btn-confirm-delete"
-                onClick={confirmDelete}
-                disabled={deleteModal.isDeleting}
-              >
-                {deleteModal.isDeleting ? '⏳ Deleting...' : 'Yes, Delete It'}
-              </button>
+                {/* ✅ NEW: Smart delete message based on product usage */}
+                <div className="delete-info-box">
+                  <p className="info-text">
+                    💡 <strong>What happens:</strong>
+                  </p>
+                  <ul className="info-list">
+                    <li>✅ Old orders & invoices will remain intact</li>
+                    <li>✅ Order history is preserved with product snapshots</li>
+                    <li>✅ This product will be hidden from new orders</li>
+                    <li>✅ You can reactivate it later if needed</li>
+                  </ul>
+                </div>
+
+                <p className="warning-text">
+                  ⚠️ This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="delete-modal-footer">
+                <button
+                  className="btn-cancel-delete"
+                  onClick={cancelDelete}
+                  disabled={deleteModal.isDeleting}
+                >
+                  {deleteModal.isDeleting ? 'Processing...' : 'No, Keep It'}
+                </button>
+                <button
+                  className="btn-confirm-delete"
+                  onClick={confirmDelete}
+                  disabled={deleteModal.isDeleting}
+                >
+                  {deleteModal.isDeleting ? '⏳ Deleting...' : 'Yes, Delete It'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* 
       <button
         className="theme-toggle"
@@ -642,7 +694,7 @@ const ProductManagement = () => {
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button> */}
-    </div>
+    </div >
   );
 };
 

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import API_CONFIG from '../config/Api';
 import './CustomerManagement.css';
 
 const CustomerManagement = () => {
+  const { customerId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -75,6 +80,65 @@ const CustomerManagement = () => {
     fetchCustomers();
   }, []);
 
+  // ✅ Sync URL with Edit/Delete Mode
+  useEffect(() => {
+    // If no customers, nothing to do
+    if (customers.length === 0) return;
+
+    const isDeleteRoute = location.pathname.endsWith('/delete');
+
+    if (customerId) {
+      const customer = customers.find(c => c.id === parseInt(customerId));
+      if (customer) {
+        if (isDeleteRoute) {
+          // Open Delete Modal
+          setDeleteTarget(customer);
+          setShowDeleteModal(true);
+
+          // Ensure Edit form is closed
+          setShowForm(false);
+          setEditingId(null);
+        } else {
+          // Open Edit Form
+          setFormData({
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+            address: customer.address || '',
+            city: customer.city || '',
+            state: customer.state || '',
+            pincode: customer.pincode || '',
+            gstin: customer.gstin || '',
+            statecode: customer.statecode || ''
+          });
+          setEditingId(customer.id);
+          setShowForm(true);
+
+          // Ensure Delete modal is closed
+          setShowDeleteModal(false);
+          setDeleteTarget(null);
+        }
+      }
+    } else if (!customerId) {
+      // No ID in URL -> Close everything
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+
+      if (editingId) {
+        resetFormState();
+      }
+    }
+  }, [customerId, customers, location.pathname]);
+
+  const resetFormState = () => {
+    setFormData({
+      name: '', email: '', phone: '', address: '',
+      city: '', state: '', statecode: '', pincode: '', gstin: ''
+    });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,19 +150,8 @@ const CustomerManagement = () => {
 
   // Reset form
   const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      statecode: '',
-      pincode: '',
-      gstin: '' // ✅ Reset GSTIN
-    });
-    setEditingId(null);
-    setShowForm(false);
+    navigate('/customers');
+    resetFormState();
   };
 
   // Handle create/update customer
@@ -163,25 +216,13 @@ const CustomerManagement = () => {
 
   // Handle edit customer
   const handleEdit = (customer) => {
-    setFormData({
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
-      address: customer.address || '',
-      city: customer.city || '',
-      state: customer.state || '',
-      pincode: customer.pincode || '',
-      gstin: customer.gstin || '', // ✅ Load GSTIN
-      statecode: customer.statecode || ''
-    });
-    setEditingId(customer.id);
-    setShowForm(true);
+    navigate(`/customers/${customer.id}`);
   };
 
   // ✅ MODIFIED: Open delete modal instead of immediate delete
+  // ✅ MODIFIED: Open delete modal instead of immediate delete
   const openDeleteModal = (customer) => {
-    setDeleteTarget(customer);
-    setShowDeleteModal(true);
+    navigate(`/customers/${customer.id}/delete`);
   };
 
   // ✅ MODIFIED: Confirm delete with modal
@@ -197,8 +238,10 @@ const CustomerManagement = () => {
 
       await axiosInstance.delete(API_CONFIG.ENDPOINTS.DELETE_CUSTOMER(deleteTarget.id));
       setSuccess('✅ Customer deleted successfully!');
-      setShowDeleteModal(false);
-      setDeleteTarget(null);
+
+      // ✅ Return to list
+      navigate('/customers');
+
       fetchCustomers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -213,6 +256,7 @@ const CustomerManagement = () => {
       }
 
       setIsDeleting(false);
+      // Close modal on error requires manual close since we didn't succeed
       setShowDeleteModal(false);
       setDeleteTarget(null);
     }
@@ -351,42 +395,42 @@ const CustomerManagement = () => {
                 />
               </div>
 
-                <div className="customer-form-row">
-                  <div className="customer-form-group">
-                    <label>StateCode *</label>
-                    <input
-                      type="text"
-                      name="statecode"
-                      value={formData.statecode}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 27"
-                      required
-                    />
-                  </div>
+              <div className="customer-form-row">
+                <div className="customer-form-group">
+                  <label>StateCode *</label>
+                  <input
+                    type="text"
+                    name="statecode"
+                    value={formData.statecode}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 27"
+                    required
+                  />
                 </div>
+              </div>
 
-                <div className="customer-form-row">
-                  <div className="customer-form-group">
-                    <label>Pincode *</label>
-                    <input
-                      type="text"
-                      name="pincode"
-                      value={formData.pincode}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 413102"
-                      required
-                    />
-                  </div>
+              <div className="customer-form-row">
+                <div className="customer-form-group">
+                  <label>Pincode *</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 413102"
+                    required
+                  />
                 </div>
+              </div>
 
-                <div className="customer-form-actions">
-                  <button type="submit" className="btn-customer-submit">
-                    {editingId ? '💾 Update Customer' : '✅ Add Customer'}
-                  </button>
-                  <button type="button" className="btn-customer-cancel" onClick={resetForm}>
-                    ❌ Cancel
-                  </button>
-                </div>
+              <div className="customer-form-actions">
+                <button type="submit" className="btn-customer-submit">
+                  {editingId ? '💾 Update Customer' : '✅ Add Customer'}
+                </button>
+                <button type="button" className="btn-customer-cancel" onClick={resetForm}>
+                  ❌ Cancel
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -439,8 +483,7 @@ const CustomerManagement = () => {
               <button
                 className="btn-customer-cancel-delete"
                 onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeleteTarget(null);
+                  navigate('/customers');
                 }}
                 disabled={isDeleting}
               >
